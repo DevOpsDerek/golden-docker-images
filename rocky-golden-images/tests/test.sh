@@ -1,18 +1,18 @@
 #!/usr/bin/env bash
-# Test golden Alpine images: version, packages, and labels.
-# Usage: ./test.sh [image_base]   e.g. ./test.sh alpine-golden
+# Test golden Rocky Linux images: version, packages, and labels.
+# Usage: ./test.sh [image_base]   e.g. ./test.sh rocky-golden
 
 set -euo pipefail
 
-IMAGE_BASE="${1:-alpine-golden}"
-VERSIONS=(3.17 3.18 3.19 3.20)
+IMAGE_BASE="${1:-rocky-golden}"
+VERSIONS=(8 9)
 FAILED=0
 
 run_test() {
   local image="$1"
   # shellcheck disable=SC2034
   local _="$2"  # version: kept for consistent 4-arg signature
-  if ! docker run --rm "$image" sh -c "$3"; then
+  if ! docker run --rm "$image" bash -c "$3"; then
     echo "FAIL: $image — $4"
     return 1
   fi
@@ -34,25 +34,25 @@ for v in "${VERSIONS[@]}"; do
   # Container starts and runs
   run_test "$image" "$v" "true" "container runs" || { FAILED=1; continue; }
 
-  # Alpine version matches tag (VERSION_ID is e.g. 3.18.0)
-  run_test "$image" "$v" "grep -q \"VERSION_ID=.*${v}\" /etc/os-release" "Alpine version $v" || { FAILED=1; continue; }
+  # Rocky version (major) matches tag
+  run_test "$image" "$v" "grep -q '^VERSION_ID=\"$v\\.' /etc/os-release || grep -q '^VERSION_ID=\"$v\"' /etc/os-release" "Rocky version $v" || { FAILED=1; continue; }
 
   # curl installed
   run_test "$image" "$v" "command -v curl && curl --version | head -1" "curl present" || { FAILED=1; continue; }
 
-  # ca-certificates installed
-  run_test "$image" "$v" "test -f /etc/ssl/certs/ca-certificates.crt" "ca-certificates present" || { FAILED=1; continue; }
+  # ca-certificates (RHEL/Rocky use /etc/pki/tls/certs/ca-bundle.crt)
+  run_test "$image" "$v" "test -f /etc/pki/tls/certs/ca-bundle.crt" "ca-certificates present" || { FAILED=1; continue; }
 
-  # apk cache clean (--no-cache leaves cache empty or minimal)
-  run_test "$image" "$v" "test ! -d /var/cache/apk || test -z \"\$(ls -A /var/cache/apk 2>/dev/null)\"" "apk cache cleaned" || { FAILED=1; continue; }
+  # dnf cache cleaned
+  run_test "$image" "$v" "test ! -d /var/cache/dnf || test -z \"\$(ls -A /var/cache/dnf 2>/dev/null)\"" "dnf cache cleaned" || { FAILED=1; continue; }
 
   # DNS resolution
-  run_test "$image" "$v" "nslookup example.com" "DNS resolution" || { FAILED=1; continue; }
+  run_test "$image" "$v" "getent hosts example.com" "DNS resolution" || { FAILED=1; continue; }
 
-  # HTTPS (TLS + ca-certificates). Skip with message if curl exits 60 (often local TLS interception).
+  # HTTPS (TLS). Rocky uses /etc/pki/tls/certs/ca-bundle.crt
   run_https_test() {
     local img="$1" r
-    docker run --rm "$img" sh -c 'SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt curl -sSf -o /dev/null https://example.com' 2>/dev/null
+    docker run --rm "$img" bash -c 'SSL_CERT_FILE=/etc/pki/tls/certs/ca-bundle.crt curl -sSf -o /dev/null https://example.com' 2>/dev/null
     r=$?
     if [[ $r -eq 0 ]]; then
       echo "OK: $img — HTTPS works"

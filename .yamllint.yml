@@ -7,8 +7,12 @@ rules:
   line-length:
     max: 120
     allow-non-breakable-inline-mappings: true
+    ignore: |
+      .github/workflows/*.yml
   document-start: disable
   comments:
     require-starting-space: true
   truthy:
     allowed-values: ['true', 'false', 'yes', 'no']
+    ignore: |
+      .github/workflows/*.yml

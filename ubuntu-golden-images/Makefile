@@ -6,7 +6,10 @@ VERSION  ?=
 
 VERSIONS := 18.04 20.04 22.04 24.04
 
-.PHONY: build build-all push push-all test lint pre-commit clean
+.PHONY: all build build-all push push-all test scan lint pre-commit clean
+
+# Default: build and test all images (single command for local CI)
+all: test
 
 build-all: $(addprefix build-,$(VERSIONS))
 build-%:
@@ -22,6 +25,13 @@ push: push-all
 
 test: build-all
 	./tests/test.sh $(REGISTRY)
+
+# Vulnerability scan (requires built images). Fails on CRITICAL/HIGH with fixes.
+scan:
+	@for v in $(VERSIONS); do \
+	  docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+	    aquasec/trivy:latest image --exit-code 1 --severity CRITICAL,HIGH --ignore-unfixed $(REGISTRY):$$v; \
+	done
 
 lint:
 	./scripts/lint.sh

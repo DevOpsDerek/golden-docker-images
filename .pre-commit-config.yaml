@@ -1,4 +1,4 @@
-# Pre-commit hooks: lint and fix before commit.
+# Pre-commit hooks: lint and fix before commit (repo root).
 # Install: pip install pre-commit && pre-commit install
 # Run manually: pre-commit run --all-files
 
@@ -7,7 +7,7 @@ default_language_version:
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.5.0
+    rev: v6.0.0
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
@@ -18,25 +18,27 @@ repos:
       - id: check-merge-conflict
       - id: detect-private-key
 
+  # Linters run in Docker — no need to install shellcheck, hadolint, or yamllint locally
   - repo: local
     hooks:
       - id: shellcheck
         name: shellcheck
-        entry: shellcheck
-        language: system
+        language: docker_image
         types: [shell]
+        entry: koalaman/shellcheck:stable
         args: [-x]
 
       - id: hadolint
         name: hadolint
-        entry: hadolint
-        language: system
+        language: docker_image
         types: [dockerfile]
-        args: [-c, .hadolint.yaml]
+        entry: hadolint/hadolint
+        # Image has no ENTRYPOINT; pass binary name first so Docker runs hadolint, not -c
+        args: [hadolint, -c, .hadolint.yaml]
 
       - id: yamllint
         name: yamllint
-        entry: yamllint
-        language: system
+        language: docker_image
         types: [yaml]
+        entry: cytopia/yamllint:latest
         args: [-c, .yamllint.yml]

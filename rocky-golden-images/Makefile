@@ -1,10 +1,10 @@
-# Golden Alpine images — build and push
+# Golden Rocky Linux images — build and push
 # Set REGISTRY (e.g. ghcr.io/myorg) and optionally VERSION
 
-REGISTRY ?= alpine-golden
+REGISTRY ?= rocky-golden
 VERSION  ?=
 
-VERSIONS := 3.17 3.18 3.19 3.20
+VERSIONS := 8 9
 
 .PHONY: all build build-all push push-all test scan lint pre-commit clean
 
@@ -42,4 +42,4 @@ pre-commit:
 clean:
 	-docker images '$(REGISTRY):*' -q | xargs -r docker rmi -f 2>/dev/null || true
 
-# Single-version targets: make build-3.18, make push-3.20
+# Single-version targets: make build-8, make push-9
