@@ -121,7 +121,7 @@ pre-commit run --all-files
 make pre-commit
 ```
 
-**Install linters (macOS):** `brew install shellcheck hadolint yamllint`  
+**Install linters (macOS):** `brew install shellcheck hadolint yamllint`
 **Ubuntu/Debian:** `sudo apt-get install shellcheck yamllint`; run Hadolint via Docker (see [Lint workflow](.github/workflows/lint.yml)).
 
 Config: `.hadolint.yaml`, `.yamllint.yml`, `.pre-commit-config.yaml` (at [repo root](../)).

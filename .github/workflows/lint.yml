@@ -16,16 +16,24 @@ jobs:
         uses: actions/checkout@v4
 
       - name: ShellCheck (Alpine)
-        run: shellcheck -x alpine-golden-images/build.sh alpine-golden-images/tests/test.sh alpine-golden-images/scripts/lint.sh
+        run: |
+          shellcheck -x alpine-golden-images/build.sh \
+            alpine-golden-images/tests/test.sh alpine-golden-images/scripts/lint.sh
 
       - name: ShellCheck (Ubuntu)
-        run: shellcheck -x ubuntu-golden-images/build.sh ubuntu-golden-images/tests/test.sh ubuntu-golden-images/scripts/lint.sh
+        run: |
+          shellcheck -x ubuntu-golden-images/build.sh \
+            ubuntu-golden-images/tests/test.sh ubuntu-golden-images/scripts/lint.sh
 
       - name: ShellCheck (Debian)
-        run: shellcheck -x debian-golden-images/build.sh debian-golden-images/tests/test.sh debian-golden-images/scripts/lint.sh
+        run: |
+          shellcheck -x debian-golden-images/build.sh \
+            debian-golden-images/tests/test.sh debian-golden-images/scripts/lint.sh
 
       - name: ShellCheck (Rocky)
-        run: shellcheck -x rocky-golden-images/build.sh rocky-golden-images/tests/test.sh rocky-golden-images/scripts/lint.sh
+        run: |
+          shellcheck -x rocky-golden-images/build.sh \
+            rocky-golden-images/tests/test.sh rocky-golden-images/scripts/lint.sh
 
       - name: Hadolint
         run: |

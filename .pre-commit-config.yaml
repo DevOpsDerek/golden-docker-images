@@ -18,25 +18,26 @@ repos:
       - id: check-merge-conflict
       - id: detect-private-key
 
+  # Linters run in Docker — no need to install shellcheck, hadolint, or yamllint locally
   - repo: local
     hooks:
       - id: shellcheck
         name: shellcheck
-        entry: shellcheck
-        language: system
+        language: docker_image
         types: [shell]
+        entry: koalaman/shellcheck:stable
         args: [-x]
 
       - id: hadolint
         name: hadolint
-        entry: hadolint
-        language: system
+        language: docker_image
         types: [dockerfile]
+        entry: hadolint/hadolint
         args: [-c, .hadolint.yaml]
 
       - id: yamllint
         name: yamllint
-        entry: yamllint
-        language: system
+        language: docker_image
         types: [yaml]
+        entry: cytopia/yamllint:latest
         args: [-c, .yamllint.yml]

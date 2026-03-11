@@ -19,7 +19,7 @@ Linting and CI are configured once at the repo root and apply to both families.
 
 ### Pre-commit
 
-One [pre-commit](https://pre-commit.com/) config at root runs on the whole repo (shell scripts, Dockerfiles, YAML).
+One [pre-commit](https://pre-commit.com/) config at root runs on the whole repo (shell scripts, Dockerfiles, YAML). ShellCheck, Hadolint, and yamllint run **inside Docker** — you only need Docker and pre-commit installed locally.
 
 **One-time setup:**
 
@@ -105,8 +105,8 @@ cd alpine-golden-images && make lint
 
 - Docker
 - Bash (for scripts); Make optional
-- For linting: ShellCheck, Hadolint, yamllint
-- For pre-commit: `pip install pre-commit`
+- For pre-commit: `pip install pre-commit` (ShellCheck, Hadolint, yamllint run in containers; no local install needed)
+- For `make lint` per family: ShellCheck, Hadolint, yamllint installed locally (or use pre-commit from root)
 
 ## License
 
