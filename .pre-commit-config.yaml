@@ -33,7 +33,8 @@ repos:
         language: docker_image
         types: [dockerfile]
         entry: hadolint/hadolint
-        args: [-c, .hadolint.yaml]
+        # Image has no ENTRYPOINT; pass binary name first so Docker runs hadolint, not -c
+        args: [hadolint, -c, .hadolint.yaml]
 
       - id: yamllint
         name: yamllint
