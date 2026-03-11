@@ -10,8 +10,8 @@ FAILED=0
 
 run_test() {
   local image="$1"
-  # shellcheck disable=SC2034 -- version kept for consistent 4-arg signature
-  local _="$2"
+  # shellcheck disable=SC2034
+  local _="$2"  # version: kept for consistent 4-arg signature
   if ! docker run --rm "$image" sh -c "$3"; then
     echo "FAIL: $image — $4"
     return 1
