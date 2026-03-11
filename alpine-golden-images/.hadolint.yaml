@@ -1,0 +1,12 @@
+# Hadolint config for golden Alpine base images
+# https://github.com/hadolint/hadolint
+
+# Use latest packages for security updates
+ignored:
+  - DL3018  # Pin versions in apk add
+  - DL3019  # Use apk add --no-cache
+
+trustedRegistries:
+  - docker.io
+  - gcr.io
+  - ghcr.io
