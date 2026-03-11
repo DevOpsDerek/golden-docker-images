@@ -82,16 +82,24 @@ for v in "${VERSIONS[@]}"; do
   else
     echo "OK: $image — OCI version label set"
   fi
-  for name in title description vendor; do
-    val="label_$name"
-    val="${!val:-}"
-    if [[ -z "$val" ]]; then
-      echo "FAIL: $image — OCI label org.opencontainers.image.$name missing or empty"
-      FAILED=1
-    else
-      echo "OK: $image — OCI $name label set"
-    fi
-  done
+  if [[ -z "$label_title" ]]; then
+    echo "FAIL: $image — OCI label org.opencontainers.image.title missing or empty"
+    FAILED=1
+  else
+    echo "OK: $image — OCI title label set"
+  fi
+  if [[ -z "$label_description" ]]; then
+    echo "FAIL: $image — OCI label org.opencontainers.image.description missing or empty"
+    FAILED=1
+  else
+    echo "OK: $image — OCI description label set"
+  fi
+  if [[ -z "$label_vendor" ]]; then
+    echo "FAIL: $image — OCI label org.opencontainers.image.vendor missing or empty"
+    FAILED=1
+  else
+    echo "OK: $image — OCI vendor label set"
+  fi
 done
 
 if [[ $FAILED -ne 0 ]]; then

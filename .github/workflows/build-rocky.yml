@@ -54,7 +54,7 @@ jobs:
           done
 
       - name: Push to registry (optional; always on monthly schedule)
-        if: (env.ENABLE_PUSH == 'true' && github.event_name != 'pull_request') || github.event_name == 'schedule'
+        if: (vars.ENABLE_PUSH == 'true' && github.event_name != 'pull_request') || github.event_name == 'schedule'
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
           REGISTRY="${REGISTRY:-ghcr.io/${{ github.repository_owner }}/rocky-golden}"
