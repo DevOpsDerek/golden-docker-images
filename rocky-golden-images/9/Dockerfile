@@ -8,9 +8,8 @@ LABEL org.opencontainers.image.title="Rocky Linux 9 Golden Image" \
       org.opencontainers.image.version="9" \
       org.opencontainers.image.vendor="Golden Images"
 
-# Apply all security and package updates
-RUN dnf -y update && \
-    dnf -y install ca-certificates curl && \
+# Install packages (--allowerasing replaces curl-minimal with full curl; skip dnf update for 9.x FS issues)
+RUN dnf -y install ca-certificates curl --allowerasing && \
     dnf clean all && \
     rm -rf /var/cache/dnf
 

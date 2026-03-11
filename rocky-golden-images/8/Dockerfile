@@ -8,9 +8,8 @@ LABEL org.opencontainers.image.title="Rocky Linux 8 Golden Image" \
       org.opencontainers.image.version="8" \
       org.opencontainers.image.vendor="Golden Images"
 
-# Apply all security and package updates
-RUN dnf -y update && \
-    dnf -y install ca-certificates curl && \
+# Install packages (dnf update can cause read-only FS in containers; base is used as-is)
+RUN dnf -y install ca-certificates curl && \
     dnf clean all && \
     rm -rf /var/cache/dnf
 
