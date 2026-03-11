@@ -1,0 +1,72 @@
+# Build and optionally push golden Rocky Linux images.
+# Monthly schedule (1st): builds and pushes with CalVer tags (e.g. 9-2025-03).
+
+name: Build Rocky Golden Images
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  schedule:
+    - cron: '0 0 1 * *'
+  workflow_dispatch:
+
+env:
+  VERSIONS: "8 9"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: rocky-golden-images
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set CalVer (monthly run)
+        if: github.event_name == 'schedule'
+        run: echo "CALVER=$(date +%Y-%m)" >> $GITHUB_ENV
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build images
+        run: |
+          for v in $VERSIONS; do
+            docker build -t rocky-golden:$v ./$v
+          done
+
+      - name: Test images
+        run: ./tests/test.sh rocky-golden
+
+      - name: Run Trivy vulnerability scanner
+        run: |
+          for v in $VERSIONS; do
+            docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+              aquasec/trivy:latest image \
+              --exit-code 1 --severity CRITICAL,HIGH --ignore-unfixed \
+              rocky-golden:$v
+          done
+
+      - name: Push to registry (optional; always on monthly schedule)
+        if: (env.ENABLE_PUSH == 'true' && github.event_name != 'pull_request') || github.event_name == 'schedule'
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          REGISTRY="${REGISTRY:-ghcr.io/${{ github.repository_owner }}/rocky-golden}"
+          for v in $VERSIONS; do
+            docker tag rocky-golden:$v $REGISTRY:$v
+            docker push $REGISTRY:$v
+            if [[ -n "${CALVER:-}" ]]; then
+              docker tag rocky-golden:$v $REGISTRY:$v-$CALVER
+              docker push $REGISTRY:$v-$CALVER
+            fi
+          done
+        env:
+          ENABLE_PUSH: ${{ vars.ENABLE_PUSH || 'false' }}
+          REGISTRY: ${{ vars.REGISTRY || '' }}
+          CALVER: ${{ env.CALVER }}

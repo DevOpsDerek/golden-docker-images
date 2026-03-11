@@ -1,0 +1,72 @@
+# Build and optionally push golden Debian images.
+# Monthly schedule (1st): builds and pushes with CalVer tags (e.g. bookworm-2025-03).
+
+name: Build Debian Golden Images
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  schedule:
+    - cron: '0 0 1 * *'
+  workflow_dispatch:
+
+env:
+  VERSIONS: "bullseye bookworm"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: debian-golden-images
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set CalVer (monthly run)
+        if: github.event_name == 'schedule'
+        run: echo "CALVER=$(date +%Y-%m)" >> $GITHUB_ENV
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build images
+        run: |
+          for v in $VERSIONS; do
+            docker build -t debian-golden:$v ./$v
+          done
+
+      - name: Test images
+        run: ./tests/test.sh debian-golden
+
+      - name: Run Trivy vulnerability scanner
+        run: |
+          for v in $VERSIONS; do
+            docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+              aquasec/trivy:latest image \
+              --exit-code 1 --severity CRITICAL,HIGH --ignore-unfixed \
+              debian-golden:$v
+          done
+
+      - name: Push to registry (optional; always on monthly schedule)
+        if: (env.ENABLE_PUSH == 'true' && github.event_name != 'pull_request') || github.event_name == 'schedule'
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          REGISTRY="${REGISTRY:-ghcr.io/${{ github.repository_owner }}/debian-golden}"
+          for v in $VERSIONS; do
+            docker tag debian-golden:$v $REGISTRY:$v
+            docker push $REGISTRY:$v
+            if [[ -n "${CALVER:-}" ]]; then
+              docker tag debian-golden:$v $REGISTRY:$v-$CALVER
+              docker push $REGISTRY:$v-$CALVER
+            fi
+          done
+        env:
+          ENABLE_PUSH: ${{ vars.ENABLE_PUSH || 'false' }}
+          REGISTRY: ${{ vars.REGISTRY || '' }}
+          CALVER: ${{ env.CALVER }}

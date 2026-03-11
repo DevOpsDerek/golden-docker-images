@@ -1,12 +1,14 @@
-# Hadolint config for golden base images (Alpine and Ubuntu)
+# Hadolint config for golden base images (Alpine, Ubuntu, Debian, Rocky)
 # https://github.com/hadolint/hadolint
 
 # Use latest packages for security updates; pinning handled by rebuild
 ignored:
   - DL3018  # Pin versions in apk add (Alpine)
   - DL3019  # Use apk add --no-cache (Alpine)
-  - DL3008  # Pin versions in apt-get install (Ubuntu)
-  - DL3015  # Avoid additional packages (Ubuntu: we need ca-certificates and curl)
+  - DL3008  # Pin versions in apt-get install (Ubuntu/Debian)
+  - DL3015  # Avoid additional packages (Ubuntu/Debian: we need ca-certificates and curl)
+  - DL3013  # Pin versions in dnf install (Rocky)
+  - DL3014  # Use -y in dnf install (Rocky: we use -y)
 
 trustedRegistries:
   - docker.io
