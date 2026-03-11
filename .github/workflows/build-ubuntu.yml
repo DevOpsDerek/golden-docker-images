@@ -1,5 +1,6 @@
 # Build and optionally push golden Ubuntu LTS images.
 # Set REGISTRY and ENABLE_PUSH in repo vars if you want to push.
+# Monthly schedule (1st): builds and pushes with CalVer tags (e.g. 18.04-2025-03).
 
 name: Build Ubuntu Golden Images
 
@@ -8,6 +9,9 @@ on:
     branches: [main, master]
   pull_request:
     branches: [main, master]
+  schedule:
+    # First day of every month, 00:00 UTC
+    - cron: '0 0 1 * *'
   workflow_dispatch:
 
 env:
@@ -25,6 +29,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Set CalVer (monthly run)
+        if: github.event_name == 'schedule'
+        run: echo "CALVER=$(date +%Y-%m)" >> $GITHUB_ENV
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -47,15 +55,20 @@ jobs:
               ubuntu-golden:$v
           done
 
-      - name: Push to registry (optional)
-        if: env.ENABLE_PUSH == 'true' && github.event_name != 'pull_request'
+      - name: Push to registry (optional; always on monthly schedule)
+        if: (env.ENABLE_PUSH == 'true' && github.event_name != 'pull_request') || github.event_name == 'schedule'
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
           REGISTRY="${REGISTRY:-ghcr.io/${{ github.repository_owner }}/ubuntu-golden}"
           for v in $VERSIONS; do
             docker tag ubuntu-golden:$v $REGISTRY:$v
             docker push $REGISTRY:$v
+            if [[ -n "${CALVER:-}" ]]; then
+              docker tag ubuntu-golden:$v $REGISTRY:$v-$CALVER
+              docker push $REGISTRY:$v-$CALVER
+            fi
           done
         env:
           ENABLE_PUSH: ${{ vars.ENABLE_PUSH || 'false' }}
           REGISTRY: ${{ vars.REGISTRY || '' }}
+          CALVER: ${{ env.CALVER }}

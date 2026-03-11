@@ -51,6 +51,8 @@ Hooks use root config files: [.pre-commit-config.yaml](.pre-commit-config.yaml),
 
 Workflows run from the repo root and use `working-directory` so each build runs in its folder.
 
+**Monthly schedule:** On the first day of each month (00:00 UTC), both build workflows run and push images to the registry (default: `ghcr.io/<owner>/alpine-golden` and `ghcr.io/<owner>/ubuntu-golden`). In addition to the version tag (e.g. `3.18`, `22.04`), images get a [CalVer](https://calver.org/) tag with year and month: e.g. `3.18-2025-03`, `22.04-2025-03`.
+
 ### Security (Trivy)
 
 Both build workflows run [Trivy](https://github.com/aquasecurity/trivy) and fail on **CRITICAL** or **HIGH** vulnerabilities with an available fix. To scan locally after building, run `make scan` from the relevant folder (e.g. `alpine-golden-images/` or `ubuntu-golden-images/`).
