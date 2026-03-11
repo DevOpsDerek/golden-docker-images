@@ -5,9 +5,9 @@ name: Build Debian Golden Images
 
 on:
   push:
-    branches: [main, master]
+    branches: [main]
   pull_request:
-    branches: [main, master]
+    branches: [main]
   schedule:
     - cron: '0 0 1 * *'
   workflow_dispatch:
@@ -58,8 +58,33 @@ jobs:
               debian-golden:$v
           done
 
-      - name: Push to registry (only on merge to main/master or monthly schedule)
-        if: (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') && vars.ENABLE_PUSH == 'true') || github.event_name == 'schedule'
+      - name: Determine if push should run
+        id: determine_push
+        run: |
+          if [[ "$EVENT" == "schedule" ]]; then
+            echo "should_push=true" >> "$GITHUB_OUTPUT"
+            echo "Push: yes (scheduled run)"
+            exit 0
+          fi
+          if [[ "$EVENT" != "push" && "$EVENT" != "workflow_dispatch" ]]; then
+            echo "should_push=false" >> "$GITHUB_OUTPUT"
+            echo "Push: no (event is $EVENT)"
+            exit 0
+          fi
+          ref_expected="refs/heads/${DEFAULT_BRANCH:-main}"
+          if [[ "$GITHUB_REF" != "$ref_expected" ]]; then
+            echo "should_push=false" >> "$GITHUB_OUTPUT"
+            echo "Push: no (ref $GITHUB_REF is not default branch $DEFAULT_BRANCH)"
+            exit 0
+          fi
+          echo "should_push=true" >> "$GITHUB_OUTPUT"
+          echo "Push: yes (merge to default branch)"
+        env:
+          EVENT: ${{ github.event_name }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+
+      - name: Push to registry (only on merge to default branch or monthly schedule)
+        if: steps.determine_push.outputs.should_push == 'true'
         run: |
           echo "$GITHUB_TOKEN" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
           GHCR_REGISTRY="${REGISTRY_GHCR:-ghcr.io/${{ github.repository_owner }}/debian-golden}"
@@ -84,7 +109,6 @@ jobs:
             done
           fi
         env:
-          ENABLE_PUSH: ${{ vars.ENABLE_PUSH || 'false' }}
           REGISTRY_GHCR: ${{ vars.REGISTRY_GHCR || '' }}
           DOCKERHUB_NAMESPACE: ${{ vars.DOCKERHUB_NAMESPACE || '' }}
           CALVER: ${{ env.CALVER }}
