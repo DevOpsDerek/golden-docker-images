@@ -64,14 +64,14 @@ CI can push images to a container registry when you enable it. Options:
 | Registry | How to use |
 |----------|------------|
 | **GitHub Container Registry (ghcr.io)** | When push runs, images are **always** pushed to GHCR at `ghcr.io/<repo_owner>/<family>-golden` using `GITHUB_TOKEN`. Override with repo variable `REGISTRY_GHCR` (e.g. `ghcr.io/myorg/alpine-golden`). |
-| **Docker Hub (in addition to GHCR)** | Set repo **variables**: `ENABLE_PUSH=true`, `DOCKERHUB_NAMESPACE=devopsd` (or your username). Add repo **secrets**: `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN`. Images are then pushed to **both** GHCR and `docker.io/<DOCKERHUB_NAMESPACE>/<family>-golden`. |
+| **Docker Hub (in addition to GHCR)** | Set repo **variable** `DOCKERHUB_NAMESPACE=devopsd` (or your username). Add repo **secrets**: `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN`. Images are then pushed to **both** GHCR and `docker.io/<DOCKERHUB_NAMESPACE>/<family>-golden`. |
 | **AWS ECR** | Set `REGISTRY=<account>.dkr.ecr.<region>.amazonaws.com/your-repo`. Use [configure-aws-credentials](https://github.com/aws-actions/amazon-ecr-login) and `docker login` to ECR in the workflow; store AWS credentials in repo secrets. |
 | **Google Artifact Registry** | Set `REGISTRY=<region>-docker.pkg.dev/<project>/<repo>/<image>`. Use [google-github-actions/auth](https://github.com/google-github-actions/auth) and `docker login` to the registry; use a service account key or Workload Identity. |
 | **Azure ACR** | Set `REGISTRY=yourregistry.azurecr.io/your-repo`. Use [azure/docker-login](https://github.com/Azure/docker-login) with an ACR service principal stored in secrets. |
 | **Quay.io** | Set `REGISTRY=quay.io/yourorg/alpine-golden`. Add secrets for Quay username and token; `docker login quay.io` in the push step. |
 | **Self-hosted (Harbor, etc.)** | Set `REGISTRY=your-registry.example.com/your-repo`. Add secrets for username/password or token and run `docker login $REGISTRY` before push. |
 
-**When push runs:** Only when code is **merged** (or pushed) to `main`/`master` and `ENABLE_PUSH=true`, or on the monthly schedule (1st of month). PRs and pushes to other branches do not publish. When it runs, images go to GHCR; if `DOCKERHUB_NAMESPACE` is set, they are also pushed to Docker Hub.
+**When push runs:** **Always** on merge (or push) to the repo’s **default branch** and on the **monthly schedule** (1st of month). No variable required — push is mandatory for those events. PRs and pushes to other branches do not publish. The “Determine if push should run” step logs why push was skipped when it doesn’t run. When it runs, images go to GHCR; if `DOCKERHUB_NAMESPACE` is set, they are also pushed to Docker Hub.
 
 **Local push:** From a family folder, e.g. `cd alpine-golden-images && make push` (uses `REGISTRY` env or default; you must `docker login` first).
 
