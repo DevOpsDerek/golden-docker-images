@@ -38,7 +38,7 @@ Hooks use root config files: [.pre-commit-config.yaml](.pre-commit-config.yaml),
 
 ### Linting (ShellCheck, Hadolint, yamllint)
 
-- **CI:** A single [Lint](.github/workflows/lint.yml) workflow runs ShellCheck, Hadolint, and yamllint on all image families.
+- **CI:** The [Lint](.github/workflows/lint.yml) workflow runs **pre-commit** (`pre-commit run --all-files`), so CI uses the same hooks as local (ShellCheck, Hadolint, yamllint, etc.).
 - **Local (per family):** From any `*-golden-images/` folder, run `make lint` (or `./scripts/lint.sh`). Linters use the config files in the repo root.
 
 **Install linters (macOS):** `brew install shellcheck hadolint yamllint`
@@ -51,7 +51,7 @@ Hooks use root config files: [.pre-commit-config.yaml](.pre-commit-config.yaml),
 | [build-ubuntu.yml](.github/workflows/build-ubuntu.yml) | Build, test, Trivy scan, optional push for Ubuntu images |
 | [build-debian.yml](.github/workflows/build-debian.yml) | Build, test, Trivy scan, optional push for Debian images |
 | [build-rocky.yml](.github/workflows/build-rocky.yml) | Build, test, Trivy scan, optional push for Rocky Linux images |
-| [lint.yml](.github/workflows/lint.yml) | Lint all families on push/PR |
+| [lint.yml](.github/workflows/lint.yml) | Run pre-commit (all hooks) on push/PR |
 
 Workflows run from the repo root and use `working-directory` so each build runs in its folder.
 
@@ -105,7 +105,7 @@ cd alpine-golden-images && make lint
 
 - Docker
 - Bash (for scripts); Make optional
-- For pre-commit: `pip install pre-commit` (ShellCheck, Hadolint, yamllint run in containers; no local install needed)
+- For pre-commit: `pip install pre-commit` (Python 3.9+; ShellCheck, Hadolint, yamllint run in containers; no local install needed)
 - For `make lint` per family: ShellCheck, Hadolint, yamllint installed locally (or use pre-commit from root)
 
 ## License

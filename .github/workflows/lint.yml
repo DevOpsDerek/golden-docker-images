@@ -1,4 +1,4 @@
-# Run ShellCheck, Hadolint, and yamllint on all image families (repo root).
+# Run pre-commit (all hooks: ShellCheck, Hadolint, yamllint, etc.) so CI matches local.
 
 name: Lint
 
@@ -9,45 +9,19 @@ on:
     branches: [main, master]
 
 jobs:
-  lint:
-    runs-on: ubuntu-latest
+  pre-commit:
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: ShellCheck (Alpine)
-        run: |
-          shellcheck -x alpine-golden-images/build.sh \
-            alpine-golden-images/tests/test.sh alpine-golden-images/scripts/lint.sh
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
 
-      - name: ShellCheck (Ubuntu)
-        run: |
-          shellcheck -x ubuntu-golden-images/build.sh \
-            ubuntu-golden-images/tests/test.sh ubuntu-golden-images/scripts/lint.sh
+      - name: Install pre-commit
+        run: python -m pip install --user pre-commit
 
-      - name: ShellCheck (Debian)
-        run: |
-          shellcheck -x debian-golden-images/build.sh \
-            debian-golden-images/tests/test.sh debian-golden-images/scripts/lint.sh
-
-      - name: ShellCheck (Rocky)
-        run: |
-          shellcheck -x rocky-golden-images/build.sh \
-            rocky-golden-images/tests/test.sh rocky-golden-images/scripts/lint.sh
-
-      - name: Hadolint
-        run: |
-          docker run --rm -v "$PWD:/mnt" -w /mnt hadolint/hadolint hadolint -c .hadolint.yaml \
-            alpine-golden-images/3.17/Dockerfile alpine-golden-images/3.18/Dockerfile \
-            alpine-golden-images/3.19/Dockerfile alpine-golden-images/3.20/Dockerfile \
-            ubuntu-golden-images/18.04/Dockerfile ubuntu-golden-images/20.04/Dockerfile \
-            ubuntu-golden-images/22.04/Dockerfile ubuntu-golden-images/24.04/Dockerfile \
-            debian-golden-images/bullseye/Dockerfile debian-golden-images/bookworm/Dockerfile \
-            rocky-golden-images/8/Dockerfile rocky-golden-images/9/Dockerfile
-
-      - name: yamllint
-        run: |
-          pip install yamllint
-          yamllint -c .yamllint.yml \
-            .github/workflows \
-            .yamllint.yml .hadolint.yaml .pre-commit-config.yaml
+      - name: Run pre-commit
+        run: pre-commit run --all-files
