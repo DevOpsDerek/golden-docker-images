@@ -9,6 +9,7 @@ ignored:
   - DL3015  # Avoid additional packages (Ubuntu/Debian: we need ca-certificates and curl)
   - DL3013  # Pin versions in dnf install (Rocky)
   - DL3014  # Use -y in dnf install (Rocky: we use -y)
+  - DL3041  # Specify version with dnf install (Rocky: we use latest; pinning by rebuild)
 
 trustedRegistries:
   - docker.io
