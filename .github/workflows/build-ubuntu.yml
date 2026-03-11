@@ -1,7 +1,7 @@
-# Build and optionally push golden Alpine images.
+# Build and optionally push golden Ubuntu LTS images.
 # Set REGISTRY and ENABLE_PUSH in repo vars if you want to push.
 
-name: Build Golden Images
+name: Build Ubuntu Golden Images
 
 on:
   push:
@@ -11,11 +11,14 @@ on:
   workflow_dispatch:
 
 env:
-  VERSIONS: "3.17 3.18 3.19 3.20"
+  VERSIONS: "18.04 20.04 22.04 24.04"
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ubuntu-golden-images
     permissions:
       contents: read
       packages: write
@@ -29,19 +32,28 @@ jobs:
       - name: Build images
         run: |
           for v in $VERSIONS; do
-            docker build -t alpine-golden:$v ./$v
+            docker build -t ubuntu-golden:$v ./$v
           done
 
       - name: Test images
-        run: ./tests/test.sh alpine-golden
+        run: ./tests/test.sh ubuntu-golden
+
+      - name: Run Trivy vulnerability scanner
+        run: |
+          for v in $VERSIONS; do
+            docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+              aquasec/trivy:latest image \
+              --exit-code 1 --severity CRITICAL,HIGH --ignore-unfixed \
+              ubuntu-golden:$v
+          done
 
       - name: Push to registry (optional)
         if: env.ENABLE_PUSH == 'true' && github.event_name != 'pull_request'
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-          REGISTRY="${REGISTRY:-ghcr.io/${{ github.repository_owner }}/alpine-golden}"
+          REGISTRY="${REGISTRY:-ghcr.io/${{ github.repository_owner }}/ubuntu-golden}"
           for v in $VERSIONS; do
-            docker tag alpine-golden:$v $REGISTRY:$v
+            docker tag ubuntu-golden:$v $REGISTRY:$v
             docker push $REGISTRY:$v
           done
         env:

@@ -68,11 +68,35 @@ make test
 ./tests/test.sh ghcr.io/myorg/alpine-golden
 ```
 
-CI runs these tests after every build (`.github/workflows/build.yml`).
+CI runs these tests after every build (workflow at repo root: [.github/workflows/build-alpine.yml](../.github/workflows/build-alpine.yml)).
+
+## Security
+
+Images are scanned for known vulnerabilities in CI using [Trivy](https://github.com/aquasecurity/trivy). The build fails if any **CRITICAL** or **HIGH** severity issues with an available fix are found (`--ignore-unfixed`).
+
+**Scan locally** (after building):
+
+```bash
+make scan
+# or manually for each version:
+for v in 3.17 3.18 3.19 3.20; do
+  docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+    aquasec/trivy image --exit-code 1 --severity CRITICAL,HIGH --ignore-unfixed alpine-golden:$v
+done
+```
+
+**Full report** (no exit-code failure):
+
+```bash
+docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+  aquasec/trivy image alpine-golden:3.20
+```
+
+Keeping images secure: use `apk upgrade` at build time (already in the Dockerfiles), rebuild and redeploy when the base Alpine image or Trivy reports new fixes, and pin to a digest in production if you need reproducibility (e.g. `alpine:3.20@sha256:...`).
 
 ## Linting
 
-Linters run on shell scripts (ShellCheck), Dockerfiles (Hadolint), and YAML (yamllint). CI runs them on every push and PR (`.github/workflows/lint.yml`).
+Linters run on shell scripts (ShellCheck), Dockerfiles (Hadolint), and YAML (yamllint). Config (`.hadolint.yaml`, `.yamllint.yml`) and CI (`.github/workflows/lint.yml`) live at the [repo root](../).
 
 ```bash
 make lint
@@ -100,7 +124,7 @@ make pre-commit
 **Install linters (macOS):** `brew install shellcheck hadolint yamllint`  
 **Ubuntu/Debian:** `sudo apt-get install shellcheck yamllint`; run Hadolint via Docker (see [Lint workflow](.github/workflows/lint.yml)).
 
-Config: `.hadolint.yaml`, `.yamllint.yml`, `.pre-commit-config.yaml`.
+Config: `.hadolint.yaml`, `.yamllint.yml`, `.pre-commit-config.yaml` (at [repo root](../)).
 
 ## Customizing a golden image
 

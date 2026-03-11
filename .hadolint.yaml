@@ -1,0 +1,14 @@
+# Hadolint config for golden base images (Alpine and Ubuntu)
+# https://github.com/hadolint/hadolint
+
+# Use latest packages for security updates; pinning handled by rebuild
+ignored:
+  - DL3018  # Pin versions in apk add (Alpine)
+  - DL3019  # Use apk add --no-cache (Alpine)
+  - DL3008  # Pin versions in apt-get install (Ubuntu)
+  - DL3015  # Avoid additional packages (Ubuntu: we need ca-certificates and curl)
+
+trustedRegistries:
+  - docker.io
+  - gcr.io
+  - ghcr.io

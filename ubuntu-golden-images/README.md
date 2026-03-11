@@ -66,9 +66,11 @@ CMD ["./run.sh"]
 
 Tests verify each image: correct Ubuntu version, presence of `curl` and `ca-certificates`, cleaned apt lists, and OCI labels.
 
-**Run tests (builds images first):**
+**Build and test in one command:**
 
 ```bash
+make
+# or
 make test
 ```
 
@@ -79,11 +81,35 @@ make test
 ./tests/test.sh ghcr.io/myorg/ubuntu-golden   # custom image name
 ```
 
-CI runs these tests after every build (see `.github/workflows/build.yml`).
+CI runs these tests after every build (workflow at repo root: [.github/workflows/build-ubuntu.yml](../.github/workflows/build-ubuntu.yml)).
+
+## Security
+
+Images are scanned for known vulnerabilities in CI using [Trivy](https://github.com/aquasecurity/trivy). The build fails if any **CRITICAL** or **HIGH** severity issues with an available fix are found (`--ignore-unfixed`).
+
+**Scan locally** (after building):
+
+```bash
+make scan
+# or manually for each version:
+for v in 18.04 20.04 22.04 24.04; do
+  docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+    aquasec/trivy image --exit-code 1 --severity CRITICAL,HIGH --ignore-unfixed ubuntu-golden:$v
+done
+```
+
+**Full report** (no exit-code failure):
+
+```bash
+docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+  aquasec/trivy image ubuntu-golden:22.04
+```
+
+Keeping images secure: use `apt-get upgrade` at build time (already in the Dockerfiles), rebuild and redeploy when the base Ubuntu image or Trivy reports new fixes, and pin to a digest in production if you need reproducibility (e.g. `ubuntu:22.04@sha256:...`).
 
 ## Linting
 
-Linters run on shell scripts (ShellCheck), Dockerfiles (Hadolint), and YAML (yamllint). CI runs them on every push and PR (`.github/workflows/lint.yml`).
+Linters run on shell scripts (ShellCheck), Dockerfiles (Hadolint), and YAML (yamllint). Config (`.hadolint.yaml`, `.yamllint.yml`) and CI (`.github/workflows/lint.yml`) live at the [repo root](../).
 
 **Run locally:**
 
@@ -112,7 +138,7 @@ pre-commit run --all-files
 make pre-commit
 ```
 
-Pre-commit requires the same linters to be installed (ShellCheck, Hadolint, yamllint). Config: `.pre-commit-config.yaml`.
+Pre-commit requires the same linters to be installed (ShellCheck, Hadolint, yamllint). Hooks use the config at [repo root](../).
 
 **Install linters (macOS):**
 
@@ -128,7 +154,7 @@ sudo apt-get install shellcheck yamllint
 docker run --rm -v "$PWD:/mnt" -w /mnt hadolint/hadolint hadolint 18.04/Dockerfile
 ```
 
-Config: `.hadolint.yaml`, `.yamllint.yml`.
+Config: `.hadolint.yaml`, `.yamllint.yml`, `.pre-commit-config.yaml` (at [repo root](../)).
 
 ## Customizing a golden image
 

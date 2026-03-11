@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # Run all linters: ShellCheck (shell), Hadolint (Dockerfiles), yamllint (YAML).
-# Requires: shellcheck, hadolint, yamllint (see README for install).
+# Config files live at repo root. Requires: shellcheck, hadolint, yamllint.
 
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-cd "$REPO_ROOT"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+cd "$SCRIPT_DIR/.."
 
 FAILED=0
 
@@ -32,13 +32,19 @@ run_linter "ShellCheck (build.sh)" shellcheck -x build.sh
 run_linter "ShellCheck (tests/test.sh)" shellcheck -x tests/test.sh
 run_linter "ShellCheck (scripts/lint.sh)" shellcheck -x scripts/lint.sh
 
-# Dockerfiles
-run_linter "Hadolint (Dockerfiles)" hadolint 3.17/Dockerfile 3.18/Dockerfile 3.19/Dockerfile 3.20/Dockerfile
+# Dockerfiles (config at repo root)
+run_linter "Hadolint (Dockerfiles)" hadolint -c "$REPO_ROOT/.hadolint.yaml" 3.17/Dockerfile 3.18/Dockerfile 3.19/Dockerfile 3.20/Dockerfile
 
-# YAML (GitHub workflows and config)
+# YAML (repo root workflows and config)
 if command -v yamllint &>/dev/null; then
   echo "--- yamllint ---"
-  if yamllint -c .yamllint.yml .github/workflows/build.yml .github/workflows/lint.yml .yamllint.yml .hadolint.yaml .pre-commit-config.yaml; then
+  if yamllint -c "$REPO_ROOT/.yamllint.yml" \
+    "$REPO_ROOT/.github/workflows/build-alpine.yml" \
+    "$REPO_ROOT/.github/workflows/build-ubuntu.yml" \
+    "$REPO_ROOT/.github/workflows/lint.yml" \
+    "$REPO_ROOT/.yamllint.yml" \
+    "$REPO_ROOT/.hadolint.yaml" \
+    "$REPO_ROOT/.pre-commit-config.yaml"; then
     echo "OK: yamllint"
   else
     FAILED=1

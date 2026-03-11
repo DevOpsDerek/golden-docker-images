@@ -10,7 +10,8 @@ LABEL org.opencontainers.image.title="Alpine 3.20 Golden Image" \
 
 # Apply all security and package updates
 RUN apk update && apk upgrade --no-cache \
-    && apk add --no-cache ca-certificates curl
+    && apk add --no-cache ca-certificates curl \
+    && rm -rf /var/cache/apk/*
 
 # Optional: uncomment to run as non-root
 # RUN adduser -D -s /bin/sh app
