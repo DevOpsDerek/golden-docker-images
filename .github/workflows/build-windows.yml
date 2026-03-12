@@ -1,0 +1,121 @@
+# Build and push golden Windows Server LTSC images (Server Core).
+# Push on merge to default branch and monthly schedule; optional Docker Hub via DOCKERHUB_NAMESPACE.
+# Monthly schedule: CalVer tags (e.g. ltsc2022-2025-03).
+# Windows containers require a Windows runner.
+
+name: Build Windows Golden Images
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '0 0 1 * *'
+  workflow_dispatch:
+
+env:
+  VERSIONS: "ltsc2019 ltsc2022 ltsc2025"
+
+jobs:
+  build:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: windows-golden-images
+        shell: pwsh
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set CalVer (monthly run)
+        if: github.event_name == 'schedule'
+        run: echo "CALVER=$(Get-Date -Format 'yyyy-MM')" >> $env:GITHUB_ENV
+
+      - name: Build images
+        run: |
+          foreach ($v in $env:VERSIONS -split ' ') {
+            docker build -t windows-golden:$v ./$v
+          }
+
+      - name: Test images
+        run: ./tests/test.ps1 windows-golden
+
+      - name: Install Trivy (Windows)
+        run: |
+          $ver = (Invoke-RestMethod -Uri 'https://api.github.com/repos/aquasecurity/trivy/releases/latest').tag_name.TrimStart('v')
+          $zip = "trivy_${ver}_Windows-64bit.zip"
+          $url = "https://github.com/aquasecurity/trivy/releases/download/v$ver/$zip"
+          Invoke-WebRequest -Uri $url -OutFile $zip -UseBasicParsing
+          Expand-Archive -Path $zip -DestinationPath . -Force
+          $exe = Get-ChildItem -Recurse -Filter trivy.exe | Select-Object -First 1 -ExpandProperty FullName
+          echo "TRIVY_EXE=$exe" >> $env:GITHUB_ENV
+
+      - name: Run Trivy vulnerability scanner
+        run: |
+          foreach ($v in $env:VERSIONS -split ' ') {
+            & $env:TRIVY_EXE image --exit-code 1 --severity CRITICAL,HIGH --ignore-unfixed windows-golden:$v
+          }
+
+      - name: Determine if push should run
+        id: determine_push
+        run: |
+          if ($env:EVENT -eq 'schedule') {
+            echo 'should_push=true' >> $env:GITHUB_OUTPUT
+            echo 'Push: yes (scheduled run)'
+            exit 0
+          }
+          if ($env:EVENT -ne 'push' -and $env:EVENT -ne 'workflow_dispatch') {
+            echo 'should_push=false' >> $env:GITHUB_OUTPUT
+            echo "Push: no (event is $env:EVENT)"
+            exit 0
+          }
+          $refExpected = "refs/heads/$env:DEFAULT_BRANCH"
+          if ($env:GITHUB_REF -ne $refExpected) {
+            echo 'should_push=false' >> $env:GITHUB_OUTPUT
+            echo "Push: no (ref $env:GITHUB_REF is not default branch $env:DEFAULT_BRANCH)"
+            exit 0
+          }
+          echo 'should_push=true' >> $env:GITHUB_OUTPUT
+          echo 'Push: yes (merge to default branch)'
+        env:
+          EVENT: ${{ github.event_name }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+
+      - name: Push to registry (only on merge to default branch or monthly schedule)
+        if: steps.determine_push.outputs.should_push == 'true'
+        run: |
+          echo $env:GITHUB_TOKEN | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          $ownerLower = $env:GITHUB_REPO_OWNER.ToLowerInvariant()
+          $ghcr = if ($env:REGISTRY_GHCR) { $env:REGISTRY_GHCR } else { "ghcr.io/${ownerLower}/windows-golden" }
+          foreach ($v in $env:VERSIONS -split ' ') {
+            docker tag windows-golden:$v "${ghcr}:${v}"
+            docker push "${ghcr}:${v}"
+            if ($env:CALVER) {
+              docker tag windows-golden:$v "${ghcr}:${v}-$env:CALVER"
+              docker push "${ghcr}:${v}-$env:CALVER"
+            }
+          }
+          if ($env:DOCKERHUB_NAMESPACE) {
+            echo $env:DOCKERHUB_TOKEN | docker login docker.io -u $env:DOCKERHUB_USERNAME --password-stdin
+            $dh = "docker.io/$env:DOCKERHUB_NAMESPACE/windows-golden"
+            foreach ($v in $env:VERSIONS -split ' ') {
+              docker tag windows-golden:$v "${dh}:${v}"
+              docker push "${dh}:${v}"
+              if ($env:CALVER) {
+                docker tag windows-golden:$v "${dh}:${v}-$env:CALVER"
+                docker push "${dh}:${v}-$env:CALVER"
+              }
+            }
+          }
+        env:
+          GITHUB_REPO_OWNER: ${{ github.repository_owner }}
+          REGISTRY_GHCR: ${{ vars.REGISTRY_GHCR || '' }}
+          DOCKERHUB_NAMESPACE: ${{ vars.DOCKERHUB_NAMESPACE || '' }}
+          CALVER: ${{ env.CALVER }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}

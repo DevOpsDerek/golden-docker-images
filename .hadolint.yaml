@@ -1,4 +1,4 @@
-# Hadolint config for golden base images (Alpine, Ubuntu, Debian, Rocky)
+# Hadolint config for golden base images (Alpine, Ubuntu, Debian, Rocky, Windows)
 # https://github.com/hadolint/hadolint
 
 # Use latest packages for security updates; pinning handled by rebuild
@@ -10,8 +10,10 @@ ignored:
   - DL3013  # Pin versions in dnf install (Rocky)
   - DL3014  # Use -y in dnf install (Rocky: we use -y)
   - DL3041  # Specify version with dnf install (Rocky: we use latest; pinning by rebuild)
+  - DL3000  # Use WORKDIR instead of cd (Windows: we use SHELL and RUN with PowerShell)
 
 trustedRegistries:
   - docker.io
   - gcr.io
   - ghcr.io
+  - mcr.microsoft.com

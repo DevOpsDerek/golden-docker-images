@@ -43,6 +43,7 @@ if command -v yamllint &>/dev/null; then
     "$REPO_ROOT/.github/workflows/build-ubuntu.yml" \
     "$REPO_ROOT/.github/workflows/build-debian.yml" \
     "$REPO_ROOT/.github/workflows/build-rocky.yml" \
+    "$REPO_ROOT/.github/workflows/build-windows.yml" \
     "$REPO_ROOT/.github/workflows/lint.yml" \
     "$REPO_ROOT/.yamllint.yml" \
     "$REPO_ROOT/.hadolint.yaml" \
