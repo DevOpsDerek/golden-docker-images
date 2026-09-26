@@ -65,9 +65,11 @@ jobs:
           SBOM_DIR="$GITHUB_WORKSPACE/ubuntu-golden-images/sbom"
           mkdir -p "$SBOM_DIR"
           for v in $VERSIONS; do
-            docker run --rm -e SYFT_CHECK_FOR_APP_UPDATE=false -v /var/run/docker.sock:/var/run/docker.sock \
-              anchore/syft:v1.52.0@sha256:500e2d872ac019436926e8322b4fc1f39441d94d21f6f4046c6ff29b30e8cb02 ubuntu-golden:$v -o spdx-json \
+            docker save ubuntu-golden:$v -o "$SBOM_DIR/ubuntu-golden-$v.tar"
+            docker run --rm -e SYFT_CHECK_FOR_APP_UPDATE=false -v "$SBOM_DIR:/work" \
+              anchore/syft:v1.52.0@sha256:500e2d872ac019436926e8322b4fc1f39441d94d21f6f4046c6ff29b30e8cb02 docker-archive:/work/ubuntu-golden-$v.tar -o spdx-json \
               > "$SBOM_DIR/ubuntu-golden-$v.spdx.json"
+            rm -f "$SBOM_DIR/ubuntu-golden-$v.tar"
           done
 
       - name: Upload SBOM artifacts

@@ -22,6 +22,12 @@ require_text() {
   local text="$2"
   local description="$3"
 
+  if [[ ! -f "$ROOT_DIR/$file" ]]; then
+    echo "FAIL: missing required file $file"
+    FAILED=1
+    return 0
+  fi
+
   if ! grep -Fq "$text" "$ROOT_DIR/$file"; then
     echo "FAIL: $file is missing $description"
     FAILED=1
@@ -54,6 +60,7 @@ for workflow in \
   require_text "$workflow" "Generate SBOMs" "the SBOM generation step"
   require_text "$workflow" "Upload SBOM artifacts" "the SBOM upload step"
   require_text "$workflow" "$SYFT_IMAGE" "the pinned Syft container invocation"
+  require_text "$workflow" "docker-archive:/work/" "the Syft archive scan source"
 done
 
 if [[ $FAILED -ne 0 ]]; then
