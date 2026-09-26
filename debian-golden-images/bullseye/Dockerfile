@@ -12,9 +12,9 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 # Apply all security and package updates
 RUN printf '%s\n' \
-        'deb https://snapshot.debian.org/archive/debian-archive/20250420T000000Z/debian bullseye main' \
+        'deb https://snapshot.debian.org/archive/debian/20250420T000000Z bullseye main' \
         'deb https://snapshot.debian.org/archive/debian-security/20250420T000000Z bullseye-security main' \
-        'deb https://snapshot.debian.org/archive/debian-archive/20250420T000000Z/debian bullseye-updates main' \
+        'deb https://snapshot.debian.org/archive/debian/20250420T000000Z bullseye-updates main' \
         > /etc/apt/sources.list \
     && printf 'Acquire::Check-Valid-Until "false";\n' > /etc/apt/apt.conf.d/99snapshot \
     && apt-get update \
