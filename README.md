@@ -8,7 +8,7 @@ Minimal, security-patched Docker base images for **Alpine**, **Ubuntu LTS**, **D
 |--------|----------|-----------|
 | **Alpine** | 3.17, 3.18, 3.19, 3.20 | [alpine-golden-images/](alpine-golden-images/) |
 | **Ubuntu LTS** | 18.04, 20.04, 22.04, 24.04 | [ubuntu-golden-images/](ubuntu-golden-images/) |
-| **Debian** | bullseye, bookworm | [debian-golden-images/](debian-golden-images/) |
+| **Debian** | bookworm | [debian-golden-images/](debian-golden-images/) |
 | **Rocky Linux** | 8, 9 | [rocky-golden-images/](rocky-golden-images/) |
 
 See each folder’s README for build, test, and usage instructions.

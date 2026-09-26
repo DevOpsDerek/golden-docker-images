@@ -5,7 +5,7 @@
 set -euo pipefail
 
 REGISTRY="${1:-debian-golden}"
-VERSIONS=(bullseye bookworm)
+VERSIONS=(bookworm)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 for v in "${VERSIONS[@]}"; do

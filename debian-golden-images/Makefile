@@ -4,7 +4,7 @@
 REGISTRY ?= debian-golden
 VERSION  ?=
 
-VERSIONS := bullseye bookworm
+VERSIONS := bookworm
 
 .PHONY: all build build-all push push-all test scan lint pre-commit clean
 
@@ -42,4 +42,4 @@ pre-commit:
 clean:
 	-docker images '$(REGISTRY):*' -q | xargs -r docker rmi -f 2>/dev/null || true
 
-# Single-version targets: make build-bookworm, make push-bullseye
+# Single-version targets: make build-bookworm, make push-bookworm
