@@ -21,7 +21,7 @@ required_sections=(
 )
 
 for section in "${required_sections[@]}"; do
-  if ! grep -Fq "$section" "$DOC"; then
+  if ! grep -Fxq -- "$section" "$DOC"; then
     echo "ERROR: missing required section in $DOC: $section"
     exit 1
   fi
