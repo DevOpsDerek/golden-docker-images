@@ -79,6 +79,16 @@ CI can push images to a container registry when you enable it. Options:
 
 All build workflows run [Trivy](https://github.com/aquasecurity/trivy) and fail on **CRITICAL** or **HIGH** vulnerabilities with an available fix. To scan locally after building, run `make scan` from the relevant family folder.
 
+## Supply-chain hardening
+
+See [docs/supply-chain-golden-path.md](docs/supply-chain-golden-path.md) for image ownership assumptions that need maintainer confirmation, supported upstream base images, lifecycle/cadence guidance, the exception process, promotion guidance, signing expectations, SBOM handling, and the response for vulnerable base images.
+
+The current build workflows now generate SPDX JSON SBOM artifacts for each built image. They do **not** publish build provenance attestations or signatures yet; those remain maintainer follow-up items until the repository has approved signing/attestation infrastructure and permissions.
+
+For promotion and deployments, treat an **immutable image digest** as the release identity. Version tags such as `22.04`, `bookworm`, or CalVer tags such as `22.04-2026-09` are useful discovery aliases, but they remain mutable registry tags and should not be the final production deployment reference on their own.
+
+The accompanying ADR [docs/adr/0001-immutable-image-identities.md](docs/adr/0001-immutable-image-identities.md) records that design decision for future changes.
+
 ## Quick start
 
 **Build and test all image families (from repo root):**

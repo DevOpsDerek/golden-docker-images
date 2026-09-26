@@ -60,6 +60,23 @@ jobs:
               alpine-golden:$v
           done
 
+      - name: Generate SBOMs
+        run: |
+          SBOM_DIR="$GITHUB_WORKSPACE/alpine-golden-images/sbom"
+          mkdir -p "$SBOM_DIR"
+          for v in $VERSIONS; do
+            docker run --rm -e SYFT_CHECK_FOR_APP_UPDATE=false -v /var/run/docker.sock:/var/run/docker.sock \
+              anchore/syft:v1.52.0@sha256:500e2d872ac019436926e8322b4fc1f39441d94d21f6f4046c6ff29b30e8cb02 alpine-golden:$v -o spdx-json \
+              > "$SBOM_DIR/alpine-golden-$v.spdx.json"
+          done
+
+      - name: Upload SBOM artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: alpine-golden-sbom
+          path: alpine-golden-images/sbom/*.spdx.json
+          if-no-files-found: error
+
       - name: Determine if push should run
         id: determine_push
         run: |
