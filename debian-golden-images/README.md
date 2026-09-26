@@ -13,7 +13,6 @@ Minimal, security-patched Docker base images for **Debian** (slim). Use these as
 
 | Version | Directory   |
 |---------|-------------|
-| Bullseye (11) | `bullseye/` |
 | Bookworm (12) | `bookworm/` |
 
 ## Build

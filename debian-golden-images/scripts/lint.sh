@@ -33,7 +33,7 @@ run_linter "ShellCheck (tests/test.sh)" shellcheck -x tests/test.sh
 run_linter "ShellCheck (scripts/lint.sh)" shellcheck -x scripts/lint.sh
 
 # Dockerfiles (config at repo root)
-run_linter "Hadolint (Dockerfiles)" hadolint -c "$REPO_ROOT/.hadolint.yaml" bullseye/Dockerfile bookworm/Dockerfile
+run_linter "Hadolint (Dockerfiles)" hadolint -c "$REPO_ROOT/.hadolint.yaml" bookworm/Dockerfile
 
 # YAML (repo root workflows and config)
 if command -v yamllint &>/dev/null; then

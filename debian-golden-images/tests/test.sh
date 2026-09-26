@@ -5,7 +5,7 @@
 set -euo pipefail
 
 IMAGE_BASE="${1:-debian-golden}"
-VERSIONS=(bullseye bookworm)
+VERSIONS=(bookworm)
 FAILED=0
 
 run_test() {
