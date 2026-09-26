@@ -66,7 +66,7 @@ jobs:
           mkdir -p "$SBOM_DIR"
           for v in $VERSIONS; do
             docker run --rm -e SYFT_CHECK_FOR_APP_UPDATE=false -v /var/run/docker.sock:/var/run/docker.sock \
-              anchore/syft:latest alpine-golden:$v -o spdx-json \
+              anchore/syft:v1.52.0@sha256:500e2d872ac019436926e8322b4fc1f39441d94d21f6f4046c6ff29b30e8cb02 alpine-golden:$v -o spdx-json \
               > "$SBOM_DIR/alpine-golden-$v.spdx.json"
           done
 

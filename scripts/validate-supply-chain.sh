@@ -35,6 +35,8 @@ require_file "README.md"
 require_file "docs/supply-chain-golden-path.md"
 require_file "docs/adr/0001-immutable-image-identities.md"
 
+SYFT_IMAGE="anchore/syft:v1.52.0@sha256:500e2d872ac019436926e8322b4fc1f39441d94d21f6f4046c6ff29b30e8cb02"
+
 require_text "README.md" "## Supply-chain hardening" "the root supply-chain overview section"
 require_text "docs/supply-chain-golden-path.md" "## Ownership and cadence assumptions" "ownership and cadence guidance"
 require_text "docs/supply-chain-golden-path.md" "## Promotion and deployment identity" "promotion identity guidance"
@@ -50,7 +52,7 @@ for workflow in \
   require_text "$workflow" "Run Trivy vulnerability scanner" "the Trivy scan step"
   require_text "$workflow" "Generate SBOMs" "the SBOM generation step"
   require_text "$workflow" "Upload SBOM artifacts" "the SBOM upload step"
-  require_text "$workflow" "anchore/syft:latest" "the Syft container invocation"
+  require_text "$workflow" "$SYFT_IMAGE" "the pinned Syft container invocation"
 done
 
 if [[ $FAILED -ne 0 ]]; then
