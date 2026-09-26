@@ -3,11 +3,11 @@
 # Requires: Docker (Windows containers). Run on Windows or with Docker Desktop Windows containers.
 
 param(
-    [string]$ImageBase = 'windows-golden'
+    [string]$ImageBase = 'windows-golden',
+    [string[]]$Versions = @('ltsc2019', 'ltsc2022', 'ltsc2025')
 )
 
 $ErrorActionPreference = 'Stop'
-$Versions = @('ltsc2019', 'ltsc2022', 'ltsc2025')
 $Failed = 0
 
 function Run-Test {

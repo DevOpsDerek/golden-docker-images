@@ -14,12 +14,21 @@ on:
     - cron: '0 0 1 * *'
   workflow_dispatch:
 
-env:
-  VERSIONS: "ltsc2019 ltsc2022 ltsc2025"
-
 jobs:
   build:
-    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - version: ltsc2019
+            runner: windows-2019
+          - version: ltsc2022
+            runner: windows-2022
+          - version: ltsc2025
+            runner: windows-2025
+    runs-on: ${{ matrix.runner }}
+    env:
+      VERSIONS: ${{ matrix.version }}
     defaults:
       run:
         working-directory: windows-golden-images
@@ -42,7 +51,7 @@ jobs:
           }
 
       - name: Test images
-        run: ./tests/test.ps1 windows-golden
+        run: ./tests/test.ps1 windows-golden -Versions ($env:VERSIONS -split ' ')
 
       - name: Install Trivy (Windows)
         run: |
