@@ -49,6 +49,7 @@ for workflow in \
   ".github/workflows/build-ubuntu.yml" \
   ".github/workflows/build-debian.yml" \
   ".github/workflows/build-rocky.yml"; do
+  require_file "$workflow"
   require_text "$workflow" "Run Trivy vulnerability scanner" "the Trivy scan step"
   require_text "$workflow" "Generate SBOMs" "the SBOM generation step"
   require_text "$workflow" "Upload SBOM artifacts" "the SBOM upload step"
