@@ -2,6 +2,7 @@
 # Per-family: cd <family>-golden-images && make
 
 .PHONY: all build-all test-all scan-all lint clean
+.PHONY: windows-build windows-test windows-lint windows-scan
 
 # Default: build and test all families
 all:
@@ -40,3 +41,24 @@ clean:
 	$(MAKE) -C ubuntu-golden-images clean
 	$(MAKE) -C debian-golden-images clean
 	$(MAKE) -C rocky-golden-images clean
+
+# Windows Server Core targets (manual/on-demand; not part of default Linux-family flows)
+# Usage examples:
+#   make windows-build
+#   make windows-test WINDOWS_VERSION=ltsc2022
+#   make windows-scan WINDOWS_VERSION=ltsc2025
+windows-build:
+	$(MAKE) -C windows-server-core-golden-images build-all
+
+windows-test:
+	$(MAKE) -C windows-server-core-golden-images test TARGET_VERSION=$(WINDOWS_VERSION)
+
+windows-lint:
+	$(MAKE) -C windows-server-core-golden-images lint
+
+windows-scan:
+	@if [ -z "$(WINDOWS_VERSION)" ]; then \
+	  echo "Set WINDOWS_VERSION=ltsc2022 or WINDOWS_VERSION=ltsc2025"; \
+	  exit 1; \
+	fi
+	$(MAKE) -C windows-server-core-golden-images scan TARGET_VERSION=$(WINDOWS_VERSION)

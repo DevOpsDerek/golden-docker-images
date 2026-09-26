@@ -1,0 +1,17 @@
+# Git
+.git
+.gitignore
+
+# Docs and scripts (not needed inside image)
+*.md
+*.sh
+*.ps1
+Makefile
+.github
+
+# IDE and OS
+.DS_Store
+*.swp
+*.swo
+.cursor
+.vscode
