@@ -12,6 +12,7 @@ LABEL org.opencontainers.image.title="Windows Server 2022 LTSC Golden Image" \
 # Use PowerShell for RUN; create TLS 1.2 registry keys if missing, then enable TLS 1.2
 SHELL ["powershell", "-Command", "$ErrorActionPreference = 'Stop'; $ProgressPreference = 'SilentlyContinue';"]
 RUN $base = 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\SCHANNEL\Protocols\TLS 1.2'; \
+    New-Item -Path $base -Force | Out-Null; \
     New-Item -Path ($base + '\Client') -Force | Out-Null; \
     New-Item -Path ($base + '\Server') -Force | Out-Null; \
     Set-ItemProperty -Path ($base + '\Client') -Name 'DisabledByDefault' -Value 0 -Type DWord -Force; \
