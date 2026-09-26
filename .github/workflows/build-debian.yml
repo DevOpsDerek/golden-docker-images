@@ -70,8 +70,8 @@ jobs:
         with:
           name: debian-golden-sbom-provenance-${{ github.run_id }}
           path: |
-            debian-golden-images/artifacts/sbom/*.json
-            debian-golden-images/artifacts/provenance/*.json
+            artifacts/sbom/*.json
+            artifacts/provenance/*.json
           if-no-files-found: error
 
       - name: Run Trivy vulnerability scanner
