@@ -25,3 +25,6 @@ jobs:
 
       - name: Run pre-commit
         run: pre-commit run --all-files
+
+      - name: Validate supply-chain docs and workflow controls
+        run: bash ./scripts/validate-supply-chain.sh

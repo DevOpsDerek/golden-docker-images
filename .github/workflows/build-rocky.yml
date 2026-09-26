@@ -58,6 +58,22 @@ jobs:
               rocky-golden:$v
           done
 
+      - name: Generate SBOMs
+        run: |
+          mkdir -p sbom
+          for v in $VERSIONS; do
+            docker run --rm -e SYFT_CHECK_FOR_APP_UPDATE=false -v /var/run/docker.sock:/var/run/docker.sock \
+              anchore/syft:latest rocky-golden:$v -o spdx-json \
+              > "sbom/rocky-golden-$v.spdx.json"
+          done
+
+      - name: Upload SBOM artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: rocky-golden-sbom
+          path: rocky-golden-images/sbom/*.spdx.json
+          if-no-files-found: error
+
       - name: Determine if push should run
         id: determine_push
         run: |
