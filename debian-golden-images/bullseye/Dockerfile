@@ -1,6 +1,6 @@
 # Golden image: Debian 11 (Bullseye)
 # Minimal, security-patched base
-ARG BASE_IMAGE=debian:bullseye-slim
+ARG BASE_IMAGE=debian/eol:bullseye-slim
 FROM ${BASE_IMAGE}
 
 LABEL org.opencontainers.image.title="Debian 11 (Bullseye) Golden Image" \
@@ -9,6 +9,15 @@ LABEL org.opencontainers.image.title="Debian 11 (Bullseye) Golden Image" \
       org.opencontainers.image.vendor="Golden Images"
 
 ENV DEBIAN_FRONTEND=noninteractive
+
+RUN sed -i \
+      -e 's|^# deb http://snapshot.debian.org/archive/debian-archive/|deb http://snapshot.debian.org/archive/debian-archive/|' \
+      -e 's|^# deb http://snapshot.debian.org/archive/debian-security/|deb http://snapshot.debian.org/archive/debian-security/|' \
+      -e 's|^deb http://archive.debian.org/|# deb http://archive.debian.org/|' \
+      -e 's|^deb http://deb.debian.org/debian-security|# deb http://deb.debian.org/debian-security|' \
+      /etc/apt/sources.list \
+    && printf '%s\n' 'Acquire::Check-Valid-Until "false";' \
+      > /etc/apt/apt.conf.d/99snapshot-valid-until
 
 # Apply all security and package updates
 RUN apt-get update \
