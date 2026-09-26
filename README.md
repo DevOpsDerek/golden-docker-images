@@ -15,7 +15,7 @@ Minimal, security-patched Docker base images for **Linux** (Alpine, Ubuntu LTS, 
 
 | Family | Versions | Directory |
 |--------|----------|-----------|
-| **Windows Server LTSC** | ltsc2019, ltsc2022, ltsc2025 (Server Core) | [windows-golden-images/](windows-golden-images/) |
+| **Windows Server LTSC** | ltsc2022, ltsc2025 (Server Core) | [windows-golden-images/](windows-golden-images/) |
 
 See each folder’s README for build, test, and usage instructions.
 
@@ -60,7 +60,7 @@ Hooks use root config files: [.pre-commit-config.yaml](.pre-commit-config.yaml),
 | [build-windows.yml](.github/workflows/build-windows.yml) | Build, test, Trivy scan, push for **Windows Server LTSC** (Windows runner) |
 | [lint.yml](.github/workflows/lint.yml) | Run pre-commit (all hooks) on push/PR |
 
-Linux workflows run on `ubuntu-24.04`; the Windows workflow runs on `windows-latest` (Windows containers). Each uses `working-directory` so the build runs in its folder.
+Linux workflows run on `ubuntu-24.04`; the Windows workflow runs on `windows-2022` and `windows-2025` for their respective images (Windows containers). Each uses `working-directory` so the build runs in its folder.
 
 **Monthly schedule:** On the first day of each month (00:00 UTC), all build workflows run and push images. Version tags plus [CalVer](https://calver.org/) tags (e.g. `3.18-2025-03`, `ltsc2022-2025-03`) are applied.
 

@@ -1,6 +1,6 @@
 # Golden Windows Server LTSC Docker Images
 
-Minimal, security-patched Docker base images for **Windows Server LTSC** (Server Core): ltsc2019, ltsc2022, and ltsc2025. Use these as a consistent Windows base for your applications.
+Minimal, security-patched Docker base images for **Windows Server LTSC** (Server Core): ltsc2022 and ltsc2025. Use these as a consistent Windows base for your applications.
 
 **Requires:** Windows host with Docker set to **Windows containers** (e.g. Docker Desktop → “Switch to Windows containers”).
 
@@ -14,7 +14,6 @@ Minimal, security-patched Docker base images for **Windows Server LTSC** (Server
 
 | Version   | Directory   |
 |-----------|-------------|
-| ltsc2019  | `ltsc2019/` |
 | ltsc2022  | `ltsc2022/` |
 | ltsc2025  | `ltsc2025/` |
 

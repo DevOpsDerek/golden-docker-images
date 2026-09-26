@@ -4,7 +4,7 @@
 
 param(
     [string]$ImageBase = 'windows-golden',
-    [string[]]$Versions = @('ltsc2019', 'ltsc2022', 'ltsc2025')
+    [string[]]$Versions = @('ltsc2022', 'ltsc2025')
 )
 
 $ErrorActionPreference = 'Stop'

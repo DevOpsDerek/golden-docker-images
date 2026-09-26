@@ -5,7 +5,7 @@
 param([string]$Registry = 'windows-golden')
 
 $ErrorActionPreference = 'Stop'
-$Versions = @('ltsc2019', 'ltsc2022', 'ltsc2025')
+$Versions = @('ltsc2022', 'ltsc2025')
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 
 foreach ($v in $Versions) {

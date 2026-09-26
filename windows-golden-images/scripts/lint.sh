@@ -28,7 +28,7 @@ run_linter() {
 }
 
 # Dockerfiles (config at repo root; hadolint supports Windows Dockerfiles)
-run_linter "Hadolint (Dockerfiles)" hadolint -c "$REPO_ROOT/.hadolint.yaml" ltsc2019/Dockerfile ltsc2022/Dockerfile ltsc2025/Dockerfile
+run_linter "Hadolint (Dockerfiles)" hadolint -c "$REPO_ROOT/.hadolint.yaml" ltsc2022/Dockerfile ltsc2025/Dockerfile
 
 # YAML (repo root workflow)
 if command -v yamllint &>/dev/null; then

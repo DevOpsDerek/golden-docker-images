@@ -4,7 +4,7 @@
 REGISTRY ?= windows-golden
 VERSION  ?=
 
-VERSIONS := ltsc2019 ltsc2022 ltsc2025
+VERSIONS := ltsc2022 ltsc2025
 
 .PHONY: all build build-all push push-all test scan lint pre-commit clean
 
