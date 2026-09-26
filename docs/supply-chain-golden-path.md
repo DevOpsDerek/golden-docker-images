@@ -39,6 +39,10 @@ Each family has its own folder (`*-golden-images/`) with Dockerfiles, tests, and
 5. Consume promoted images by immutable digest in deployment systems.
 6. Keep mutable tags for discovery/convenience only.
 
+The uploaded Buildx metadata records build results such as image descriptors and
+digests. It is build evidence, not a SLSA provenance attestation, and the
+workflows do not currently publish or verify provenance attestations.
+
 ## Promotion identity and deployment guidance
 
 - **Promotion/deployment identity:** immutable digest references (`image@sha256:...`) are the release identity.

@@ -14,7 +14,6 @@ on:
 
 env:
   VERSIONS: "bullseye bookworm"
-  BUILDX_METADATA_PROVENANCE: max
 
 jobs:
   build:
@@ -43,10 +42,10 @@ jobs:
 
       - name: Build images
         run: |
-          mkdir -p artifacts/provenance
+          mkdir -p "$GITHUB_WORKSPACE/artifacts/build-metadata"
           for v in $VERSIONS; do
             docker buildx build --load \
-              --metadata-file "artifacts/provenance/$v.build-metadata.json" \
+              --metadata-file "$GITHUB_WORKSPACE/artifacts/build-metadata/$v.json" \
               -t debian-golden:$v ./$v
           done
 
@@ -55,10 +54,10 @@ jobs:
 
       - name: Generate SBOM artifacts
         run: |
-          mkdir -p artifacts/sbom
+          mkdir -p "$GITHUB_WORKSPACE/artifacts/sbom"
           for v in $VERSIONS; do
             docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
-              -v "$PWD/artifacts:/out" \
+              -v "$GITHUB_WORKSPACE/artifacts:/out" \
               aquasec/trivy:latest image \
               --format cyclonedx \
               --output "/out/sbom/$v.cdx.json" \
@@ -68,10 +67,10 @@ jobs:
       - name: Upload SBOM and build metadata artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: debian-golden-sbom-provenance-${{ github.run_id }}
+          name: debian-golden-build-evidence-${{ github.run_id }}
           path: |
-            artifacts/sbom/*.json
-            artifacts/provenance/*.json
+            ${{ github.workspace }}/artifacts/sbom/*.json
+            ${{ github.workspace }}/artifacts/build-metadata/*.json
           if-no-files-found: error
 
       - name: Run Trivy vulnerability scanner
