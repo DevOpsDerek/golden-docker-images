@@ -62,11 +62,12 @@ jobs:
 
       - name: Generate SBOMs
         run: |
-          mkdir -p sbom
+          SBOM_DIR="$GITHUB_WORKSPACE/alpine-golden-images/sbom"
+          mkdir -p "$SBOM_DIR"
           for v in $VERSIONS; do
             docker run --rm -e SYFT_CHECK_FOR_APP_UPDATE=false -v /var/run/docker.sock:/var/run/docker.sock \
               anchore/syft:latest alpine-golden:$v -o spdx-json \
-              > "sbom/alpine-golden-$v.spdx.json"
+              > "$SBOM_DIR/alpine-golden-$v.spdx.json"
           done
 
       - name: Upload SBOM artifacts
