@@ -16,6 +16,7 @@ on:
 
 env:
   VERSIONS: "18.04 20.04 22.04 24.04"
+  BUILDX_METADATA_PROVENANCE: max
 
 jobs:
   build:
@@ -44,12 +45,36 @@ jobs:
 
       - name: Build images
         run: |
+          mkdir -p artifacts/provenance
           for v in $VERSIONS; do
-            docker build -t ubuntu-golden:$v ./$v
+            docker buildx build --load \
+              --metadata-file "artifacts/provenance/$v.build-metadata.json" \
+              -t ubuntu-golden:$v ./$v
           done
 
       - name: Test images
         run: ./tests/test.sh ubuntu-golden
+
+      - name: Generate SBOM artifacts
+        run: |
+          mkdir -p artifacts/sbom
+          for v in $VERSIONS; do
+            docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+              -v "$PWD/artifacts:/out" \
+              aquasec/trivy:latest image \
+              --format cyclonedx \
+              --output "/out/sbom/$v.cdx.json" \
+              ubuntu-golden:$v
+          done
+
+      - name: Upload SBOM and build metadata artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ubuntu-golden-sbom-provenance-${{ github.run_id }}
+          path: |
+            ubuntu-golden-images/artifacts/sbom/*.json
+            ubuntu-golden-images/artifacts/provenance/*.json
+          if-no-files-found: error
 
       - name: Run Trivy vulnerability scanner
         run: |

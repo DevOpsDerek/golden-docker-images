@@ -2,6 +2,11 @@
 
 Minimal, security-patched Docker base images for **Alpine**, **Ubuntu LTS**, **Debian**, and **Rocky Linux**. Each family is built, tested, and scanned for vulnerabilities in CI. Use these as a consistent foundation for your applications.
 
+## Supply-chain policy and architecture decisions
+
+- Supply-chain golden path policy: [docs/supply-chain-golden-path.md](docs/supply-chain-golden-path.md)
+- ADR 0001 (promotion identity and signing posture): [docs/adr/0001-image-promotion-identity-and-signing.md](docs/adr/0001-image-promotion-identity-and-signing.md)
+
 ## Image families
 
 | Family | Versions | Directory |

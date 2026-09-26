@@ -1,7 +1,7 @@
 # Golden Docker Images — build and test all families from repo root.
 # Per-family: cd <family>-golden-images && make
 
-.PHONY: all build-all test-all scan-all lint clean
+.PHONY: all build-all test-all scan-all lint validate-docs clean
 
 # Default: build and test all families
 all:
@@ -33,6 +33,10 @@ lint:
 	$(MAKE) -C ubuntu-golden-images lint
 	$(MAKE) -C debian-golden-images lint
 	$(MAKE) -C rocky-golden-images lint
+
+# Validate repository supply-chain policy docs
+validate-docs:
+	./scripts/validate-supply-chain-docs.sh
 
 # Remove built images from all families
 clean:

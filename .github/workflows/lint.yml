@@ -25,3 +25,8 @@ jobs:
 
       - name: Run pre-commit
         run: pre-commit run --all-files
+
+      - name: Validate supply-chain documentation
+        run: |
+          chmod +x scripts/validate-supply-chain-docs.sh
+          ./scripts/validate-supply-chain-docs.sh
