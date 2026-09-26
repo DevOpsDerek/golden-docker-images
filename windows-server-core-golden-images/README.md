@@ -10,6 +10,8 @@ There is no Windows Server 2026 LTSC container base tag in MCR.
 ## Build
 
 ```bash
+cd windows-server-core-golden-images
+
 # Build both LTSC variants
 make build-all
 
@@ -21,6 +23,8 @@ make build-ltsc2025
 ## Test
 
 ```bash
+cd windows-server-core-golden-images
+
 # Static checks (works on Linux CI too)
 make test
 
@@ -31,12 +35,15 @@ make test TARGET_VERSION=ltsc2022
 ## Lint
 
 ```bash
+cd windows-server-core-golden-images
 make lint
 ```
 
 ## Vulnerability scan
 
 ```bash
+cd windows-server-core-golden-images
+
 # Focused scan for one built LTSC variant
 make scan TARGET_VERSION=ltsc2025
 ```

@@ -59,7 +59,7 @@ Workflows run from the repo root and use `working-directory` so each build runs 
 
 **Monthly schedule (Linux families only):** On the first day of each month (00:00 UTC), Linux build workflows run and push images. In addition to the version tag, images get a [CalVer](https://calver.org/) tag with year and month (e.g. `3.18-2025-03`, `bookworm-2025-03`, `9-2025-03`).
 
-**Cost-conscious Windows policy:** Windows Server Core builds are manual-only (`workflow_dispatch`) and validate one selected LTSC version per run on its matching Windows runner (`windows-2022` or `windows-2025`). Publishing is opt-in and disabled by default.
+**Cost-conscious Windows policy:** Windows Server Core builds are manual-only (`workflow_dispatch`) and validate one selected LTSC version per run on its matching Windows runner (`windows-2022` for `ltsc2022`, `windows-2025` for `ltsc2025`). Publishing is opt-in and disabled by default.
 
 ### Publishing images
 

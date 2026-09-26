@@ -1,7 +1,6 @@
 # Golden Windows Server Core images — LTSC 2022 and LTSC 2025
 
 REGISTRY ?= windows-server-core-golden
-VERSION  ?=
 TARGET_VERSION ?=
 
 VERSIONS := ltsc2022 ltsc2025
@@ -12,7 +11,7 @@ all: test
 
 build-all: $(addprefix build-,$(VERSIONS))
 build-%:
-	docker build -t $(REGISTRY):$*$(if $(VERSION),-$(VERSION),) ./$*
+	docker build -t $(REGISTRY):$* ./$*
 
 build: build-all
 
@@ -33,10 +32,15 @@ scan:
 	trivy image --exit-code 1 --severity CRITICAL,HIGH --ignore-unfixed $(REGISTRY):$(TARGET_VERSION)
 
 push-%: build-%
-	docker push $(REGISTRY):$*$(if $(VERSION),-$(VERSION),)
+	docker push $(REGISTRY):$*
 
 push-all: $(addprefix push-,$(VERSIONS))
 push: push-all
 
 clean:
-	-docker images '$(REGISTRY):*' -q | xargs -r docker rmi -f 2>/dev/null || true
+	@images=$$(docker images '$(REGISTRY):*' -q 2>/dev/null); \
+	if [ -n "$$images" ]; then \
+	  docker rmi -f $$images; \
+	else \
+	  echo "No images to remove for $(REGISTRY)."; \
+	fi

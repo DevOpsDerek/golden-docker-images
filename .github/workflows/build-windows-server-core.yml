@@ -29,10 +29,9 @@ jobs:
     defaults:
       run:
         working-directory: windows-server-core-golden-images
-        shell: bash
+        shell: pwsh
     permissions:
       contents: read
-      packages: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -43,28 +42,46 @@ jobs:
       - name: Build selected LTSC image
         env:
           VERSION: ${{ inputs.version }}
-        run: docker build -t "$IMAGE_NAME:$VERSION" "./$VERSION"
+        run: docker build -t "$env:IMAGE_NAME:$env:VERSION" "./$env:VERSION"
 
       - name: Focused tests for selected LTSC image
         env:
           VERSION: ${{ inputs.version }}
-        run: ./tests/test.sh "$IMAGE_NAME" "$VERSION"
+        run: ./tests/test.ps1 -ImageBase "$env:IMAGE_NAME" -TargetVersion "$env:VERSION"
 
       - name: Run Trivy vulnerability scanner
         env:
           VERSION: ${{ inputs.version }}
-        run: trivy image --exit-code 1 --severity CRITICAL,HIGH --ignore-unfixed "$IMAGE_NAME:$VERSION"
+        run: trivy image --exit-code 1 --severity CRITICAL,HIGH --ignore-unfixed "$env:IMAGE_NAME:$env:VERSION"
+
+  publish:
+    if: inputs.publish == true
+    needs: build-test-scan
+    runs-on: ${{ inputs.version == 'ltsc2022' && 'windows-2022' || 'windows-2025' }}
+    defaults:
+      run:
+        working-directory: windows-server-core-golden-images
+        shell: pwsh
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Rebuild selected LTSC image for publish
+        env:
+          VERSION: ${{ inputs.version }}
+        run: docker build -t "$env:IMAGE_NAME:$env:VERSION" "./$env:VERSION"
 
       - name: Publish selected image to GHCR (opt-in)
-        if: inputs.publish == true
         env:
           VERSION: ${{ inputs.version }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPO_OWNER: ${{ github.repository_owner }}
         run: |
-          REPO_OWNER_LOWER=$(echo "$GITHUB_REPO_OWNER" | tr '[:upper:]' '[:lower:]')
-          GHCR_IMAGE="ghcr.io/$REPO_OWNER_LOWER/$IMAGE_NAME"
-
-          echo "$GITHUB_TOKEN" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
-          docker tag "$IMAGE_NAME:$VERSION" "$GHCR_IMAGE:$VERSION"
-          docker push "$GHCR_IMAGE:$VERSION"
+          $repoOwnerLower = "$env:GITHUB_REPO_OWNER".ToLowerInvariant()
+          $ghcrImage = "ghcr.io/$repoOwnerLower/$env:IMAGE_NAME"
+          $env:GITHUB_TOKEN | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+          docker tag "$env:IMAGE_NAME:$env:VERSION" "$ghcrImage:$env:VERSION"
+          docker push "$ghcrImage:$env:VERSION"

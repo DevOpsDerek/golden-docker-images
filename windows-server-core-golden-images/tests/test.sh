@@ -19,7 +19,12 @@ if [[ -n "$TARGET_VERSION" && "$TARGET_VERSION" != "ltsc2022" && "$TARGET_VERSIO
   exit 1
 fi
 
-mapfile -t actual_versions < <(find "$ROOT_DIR" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | grep '^ltsc' | sort)
+mapfile -t actual_versions < <(
+  for d in "$ROOT_DIR"/ltsc*/; do
+    [[ -d "$d" ]] || continue
+    basename "$d"
+  done | sort
+)
 if [[ "${actual_versions[*]}" != "${expected_versions[*]}" ]]; then
   echo "FAIL: expected LTSC directories '${expected_versions[*]}', got '${actual_versions[*]}'"
   FAILED=1
@@ -35,11 +40,18 @@ for v in "${expected_versions[@]}"; do
     continue
   fi
 
-  if ! grep -Fq "mcr.microsoft.com/windows/servercore:$v" "$dockerfile"; then
-    echo "FAIL: $dockerfile must use mcr.microsoft.com/windows/servercore:$v"
+  if ! grep -Fq "ARG BASE_IMAGE=mcr.microsoft.com/windows/servercore:$v" "$dockerfile"; then
+    echo "FAIL: $dockerfile must set ARG BASE_IMAGE to mcr.microsoft.com/windows/servercore:$v"
     FAILED=1
   else
-    echo "OK: $dockerfile uses the official servercore:$v base tag"
+    echo "OK: $dockerfile sets ARG BASE_IMAGE to servercore:$v"
+  fi
+
+  if ! grep -Fq "FROM \${BASE_IMAGE}" "$dockerfile"; then
+    echo "FAIL: $dockerfile must build FROM \${BASE_IMAGE}"
+    FAILED=1
+  else
+    echo "OK: $dockerfile builds FROM \${BASE_IMAGE}"
   fi
 
   if ! grep -Fq "org.opencontainers.image.version=\"$v\"" "$dockerfile"; then
@@ -58,10 +70,19 @@ if [[ -n "$TARGET_VERSION" ]]; then
     echo "FAIL: $image not found (build it first)"
     FAILED=1
   else
-    if docker run --rm "$image" powershell -NoLogo -NoProfile -Command "Write-Output 'container-runs'" | grep -q '^container-runs$'; then
+    runtime_output=""
+    runtime_output_normalized=""
+    if runtime_output="$(docker run --rm "$image" powershell.exe -NoLogo -NoProfile -Command "Write-Output 'container-runs'" 2>&1)"; then
+      runtime_output_normalized="${runtime_output//$'\r'/}"
+    fi
+
+    if [[ -n "$runtime_output_normalized" ]] && grep -q '^container-runs$' <<<"$runtime_output_normalized"; then
       echo "OK: $image container starts"
     else
       echo "FAIL: $image container failed runtime command"
+      if [[ -n "$runtime_output" ]]; then
+        echo "$runtime_output"
+      fi
       FAILED=1
     fi
 
