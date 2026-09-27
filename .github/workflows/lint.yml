@@ -28,3 +28,6 @@ jobs:
 
       - name: Validate supply-chain docs and workflow controls
         run: bash ./scripts/validate-supply-chain.sh
+
+      - name: Validate Windows build controls without starting Windows runners
+        run: bash ./scripts/validate-windows.sh

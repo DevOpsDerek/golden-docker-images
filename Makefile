@@ -1,8 +1,10 @@
 # Golden Docker Images — build and test all families from repo root.
 # Per-family: cd <family>-golden-images && make
 
-.PHONY: all build-all test-all scan-all lint clean
+.PHONY: all build-all test-all scan-all lint clean build-windows test-windows scan-windows
 .PHONY: windows-build windows-test windows-lint windows-scan
+
+WINDOWS_VERSION ?=
 
 # Default: build and test all families
 all:
@@ -34,6 +36,22 @@ lint:
 	$(MAKE) -C ubuntu-golden-images lint
 	$(MAKE) -C debian-golden-images lint
 	$(MAKE) -C rocky-golden-images lint
+	hadolint -c .hadolint.yaml windows-golden-images/ltsc2022/Dockerfile windows-golden-images/ltsc2025/Dockerfile
+	yamllint -c .yamllint.yml .github/workflows/build-windows.yml
+	shellcheck scripts/validate-windows.sh
+	bash ./scripts/validate-windows.sh
+
+# Explicit Windows-only targets; never included in the default Linux targets.
+build-windows:
+	@test -n "$(WINDOWS_VERSION)" || { echo "Set WINDOWS_VERSION=ltsc2022 or ltsc2025"; exit 1; }
+	pwsh -File windows-golden-images/build.ps1 -Version "$(WINDOWS_VERSION)"
+
+test-windows: build-windows
+	pwsh -File windows-golden-images/tests/test.ps1 -Version "$(WINDOWS_VERSION)"
+
+scan-windows:
+	@test -n "$(WINDOWS_VERSION)" || { echo "Set WINDOWS_VERSION=ltsc2022 or ltsc2025"; exit 1; }
+	trivy image --image-src docker --scanners vuln --exit-code 1 --severity CRITICAL,HIGH --ignore-unfixed "windows-golden:$(WINDOWS_VERSION)"
 
 # Remove built images from all families
 clean:

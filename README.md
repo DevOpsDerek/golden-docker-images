@@ -1,6 +1,6 @@
 # Golden Docker Images
 
-Minimal, security-patched Docker base images for **Alpine**, **Ubuntu LTS**, **Debian**, **Rocky Linux**, and **Windows Server Core LTSC**. Linux families are built, tested, and scanned continuously in CI; Windows Server Core is validated on demand to avoid recurring Windows runner costs. Use these as a consistent foundation for your applications.
+Minimal Docker base images for **Alpine**, **Ubuntu LTS**, **Debian**, **Rocky Linux**, and **Windows Server Core**. Linux families build and scan in CI; Windows builds and scans are on demand to avoid recurring Windows runner costs.
 
 ## Image families
 
@@ -11,12 +11,13 @@ Minimal, security-patched Docker base images for **Alpine**, **Ubuntu LTS**, **D
 | **Debian** | bookworm | [debian-golden-images/](debian-golden-images/) |
 | **Rocky Linux** | 8, 9 | [rocky-golden-images/](rocky-golden-images/) |
 | **Windows Server Core LTSC** | ltsc2022, ltsc2025 | [windows-server-core-golden-images/](windows-server-core-golden-images/) |
+| **Windows Server Core** | ltsc2022, ltsc2025 | [windows-golden-images/](windows-golden-images/) |
 
 See each folder’s README for build, test, and usage instructions.
 
 ## Shared configuration (repo root)
 
-Linting and CI are configured once at the repo root and apply to both families.
+Linting and CI are configured at the repo root for all families.
 
 ### Pre-commit
 
@@ -40,7 +41,7 @@ Hooks use root config files: [.pre-commit-config.yaml](.pre-commit-config.yaml),
 ### Linting (ShellCheck, Hadolint, yamllint)
 
 - **CI:** The [Lint](.github/workflows/lint.yml) workflow runs **pre-commit** (`pre-commit run --all-files`), so CI uses the same hooks as local (ShellCheck, Hadolint, yamllint, etc.).
-- **Local (per family):** From any `*-golden-images/` folder, run `make lint` (or `./scripts/lint.sh`). Linters use the config files in the repo root.
+- **Local (Linux families):** From a Linux `*-golden-images/` folder, run `make lint` (or `./scripts/lint.sh`). For Windows Dockerfiles and workflow controls, run `hadolint` and `bash scripts/validate-windows.sh` from the root (also included in `make lint`).
 
 **Install linters (macOS):** `brew install shellcheck hadolint yamllint`
 
@@ -52,14 +53,12 @@ Hooks use root config files: [.pre-commit-config.yaml](.pre-commit-config.yaml),
 | [build-ubuntu.yml](.github/workflows/build-ubuntu.yml) | Build, test, Trivy scan, optional push for Ubuntu images |
 | [build-debian.yml](.github/workflows/build-debian.yml) | Build, test, Trivy scan, optional push for Debian images |
 | [build-rocky.yml](.github/workflows/build-rocky.yml) | Build, test, Trivy scan, optional push for Rocky Linux images |
-| [build-windows-server-core.yml](.github/workflows/build-windows-server-core.yml) | **Manual-only** build/test/Trivy for one selected Windows LTSC version (`ltsc2022` or `ltsc2025`), optional publish |
-| [lint.yml](.github/workflows/lint.yml) | Run pre-commit (all hooks) on push/PR |
+| [build-windows.yml](.github/workflows/build-windows.yml) | Manual-only build, test and scan for one selected Windows LTSC version; optional GHCR publication |
+| [lint.yml](.github/workflows/lint.yml) | Run pre-commit and Windows static checks on push/PR (Linux runner) |
 
 Workflows run from the repo root and use `working-directory` so each build runs in its folder.
 
-**Monthly schedule (Linux families only):** On the first day of each month (00:00 UTC), Linux build workflows run and push images. In addition to the version tag, images get a [CalVer](https://calver.org/) tag with year and month (e.g. `3.18-2025-03`, `bookworm-2025-03`, `9-2025-03`).
-
-**Cost-conscious Windows policy:** Windows Server Core builds are manual-only (`workflow_dispatch`) and validate one selected LTSC version per run on its matching Windows runner (`windows-2022` for `ltsc2022`, `windows-2025` for `ltsc2025`). Publishing is opt-in and disabled by default.
+**Monthly schedule:** On the first day of each month (00:00 UTC), the Linux build workflows run and push images. Windows has no schedule, push, or PR build trigger. Linux images also get a [CalVer](https://calver.org/) tag with year and month (e.g. `3.18-2025-03`, `bookworm-2025-03`, `9-2025-03`).
 
 ### Publishing images
 
@@ -75,19 +74,19 @@ CI can push images to a container registry when you enable it. Options:
 | **Quay.io** | Set `REGISTRY=quay.io/yourorg/alpine-golden`. Add secrets for Quay username and token; `docker login quay.io` in the push step. |
 | **Self-hosted (Harbor, etc.)** | Set `REGISTRY=your-registry.example.com/your-repo`. Add secrets for username/password or token and run `docker login $REGISTRY` before push. |
 
-**When push runs:** **Always** on merge (or push) to the repo’s **default branch** and on the **monthly schedule** (1st of month). No variable required — push is mandatory for those events. PRs and pushes to other branches do not publish. The “Determine if push should run” step logs why push was skipped when it doesn’t run. When it runs, images go to GHCR; if `DOCKERHUB_NAMESPACE` is set, they are also pushed to Docker Hub.
+**When Linux push runs:** **Always** on merge (or push) to the repo’s **default branch** and on the **monthly schedule** (1st of month). No variable required — push is mandatory for those events. PRs and pushes to other branches do not publish. The “Determine if push should run” step logs why push was skipped when it doesn’t run. When it runs, images go to GHCR; if `DOCKERHUB_NAMESPACE` is set, they are also pushed to Docker Hub. Windows publication instead requires a manual dispatch from `main` with `publish=true`; the default is false.
 
 **Local push:** From a family folder, e.g. `cd alpine-golden-images && make push` (uses `REGISTRY` env or default; you must `docker login` first).
 
 ### Security (Trivy)
 
-All build workflows run [Trivy](https://github.com/aquasecurity/trivy) and fail on **CRITICAL** or **HIGH** vulnerabilities with an available fix. To scan locally after building, run `make scan` from the relevant family folder.
+Build workflows run [Trivy](https://github.com/aquasecurity/trivy) and fail on **CRITICAL** or **HIGH** vulnerabilities with an available fix. Windows scans occur only on manual dispatch; Trivy does not guarantee coverage of Windows OS patch vulnerabilities. To scan a Linux image locally after building, run `make scan` from the relevant family folder.
 
 ## Supply-chain hardening
 
 See [docs/supply-chain-golden-path.md](docs/supply-chain-golden-path.md) for image ownership assumptions that need maintainer confirmation, supported upstream base images, lifecycle/cadence guidance, the exception process, promotion guidance, signing expectations, SBOM handling, and the response for vulnerable base images.
 
-The current build workflows now generate SPDX JSON SBOM artifacts for each built image. They do **not** publish build provenance attestations or signatures yet; those remain maintainer follow-up items until the repository has approved signing/attestation infrastructure and permissions.
+The Linux build workflows generate SPDX JSON SBOM artifacts for each built image. The manual Windows workflow does not generate an SBOM; it builds, tests, and scans only. None publish build provenance attestations or signatures yet; those remain maintainer follow-up items until the repository has approved signing/attestation infrastructure and permissions.
 
 For promotion and deployments, treat an **immutable image digest** as the release identity. Version tags such as `22.04`, `bookworm`, or CalVer tags such as `22.04-2026-09` are useful discovery aliases, but they remain mutable registry tags and should not be the final production deployment reference on their own.
 
@@ -95,7 +94,7 @@ The accompanying ADR [docs/adr/0001-immutable-image-identities.md](docs/adr/0001
 
 ## Quick start
 
-**Build and test all image families (from repo root):**
+**Build and test all Linux image families (from repo root):**
 
 ```bash
 make
@@ -126,6 +125,8 @@ make windows-test WINDOWS_VERSION=ltsc2022
 make windows-lint
 make windows-scan WINDOWS_VERSION=ltsc2025
 ```
+
+For Windows, see [Windows build and test instructions](windows-golden-images/README.md). Use `make test-windows WINDOWS_VERSION=ltsc2022` (or `ltsc2025`) only on a matching Windows container host; this is never part of the default `make` targets.
 
 **Lint the whole repo (from root):**
 
