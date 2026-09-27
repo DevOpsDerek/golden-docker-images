@@ -1,0 +1,75 @@
+name: Build Windows Golden Image
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Windows Server Core LTSC release (one per run)
+        required: true
+        type: choice
+        options:
+          - ltsc2022
+          - ltsc2025
+      publish:
+        description: Publish the validated image to GHCR (default is validation only)
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build:
+    runs-on: ${{ inputs.version == 'ltsc2022' && 'windows-2022' || 'windows-2025' }}
+    timeout-minutes: 90
+    defaults:
+      run:
+        shell: pwsh
+        working-directory: windows-golden-images
+    env:
+      VERSION: ${{ inputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Require main for publication
+        if: inputs.publish && github.ref != 'refs/heads/main'
+        run: throw 'Publishing is allowed only from main.'
+
+      - name: Build selected Windows image
+        run: ./build.ps1 -Version $env:VERSION
+
+      - name: Test selected Windows image
+        run: ./tests/test.ps1 -Version $env:VERSION
+
+      - name: Install pinned Trivy for Windows
+        run: |
+          $version = '0.74.0'
+          $archive = "trivy_${version}_windows-64bit.zip"
+          $url = "https://github.com/aquasecurity/trivy/releases/download/v$version/$archive"
+          $path = Join-Path $env:RUNNER_TEMP $archive
+          Invoke-WebRequest -Uri $url -OutFile $path
+          $expected = '94c40e0696e4b907a74b7b2e1438d5d72ebaca83115817407f568a002d520842'
+          $actual = (Get-FileHash -Path $path -Algorithm SHA256).Hash
+          if ($actual -ne $expected) { throw "Trivy archive checksum mismatch: $actual" }
+          Expand-Archive -Path $path -DestinationPath $env:RUNNER_TEMP -Force
+          "$env:RUNNER_TEMP" | Out-File -FilePath $env:GITHUB_PATH -Append
+
+      - name: Scan selected Windows image
+        run: trivy image --image-src docker --scanners vuln --exit-code 1 --severity CRITICAL,HIGH --ignore-unfixed "windows-golden:$env:VERSION"
+
+      - name: Publish to GHCR only when explicitly requested on main
+        if: inputs.publish && github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OWNER: ${{ github.repository_owner }}
+          ACTOR: ${{ github.actor }}
+        run: |
+          $image = "ghcr.io/$($env:OWNER.ToLowerInvariant())/windows-golden:$env:VERSION"
+          $env:GH_TOKEN | docker login ghcr.io -u $env:ACTOR --password-stdin
+          if ($LASTEXITCODE -ne 0) { throw 'GHCR login failed.' }
+          docker tag "windows-golden:$env:VERSION" $image
+          if ($LASTEXITCODE -ne 0) { throw 'Docker tag failed.' }
+          docker push $image
+          if ($LASTEXITCODE -ne 0) { throw 'Docker push failed.' }
