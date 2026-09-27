@@ -10,6 +10,7 @@ Minimal Docker base images for **Alpine**, **Ubuntu LTS**, **Debian**, **Rocky L
 | **Ubuntu LTS** | 18.04, 20.04, 22.04, 24.04 | [ubuntu-golden-images/](ubuntu-golden-images/) |
 | **Debian** | bookworm | [debian-golden-images/](debian-golden-images/) |
 | **Rocky Linux** | 8, 9 | [rocky-golden-images/](rocky-golden-images/) |
+| **Windows Server Core LTSC** | ltsc2022, ltsc2025 | [windows-server-core-golden-images/](windows-server-core-golden-images/) |
 | **Windows Server Core** | ltsc2022, ltsc2025 | [windows-golden-images/](windows-golden-images/) |
 
 See each folder’s README for build, test, and usage instructions.
@@ -117,6 +118,12 @@ make build-all   # build all images (all families)
 make scan-all    # Trivy scan all built images (run after make build-all)
 make lint        # run ShellCheck, Hadolint, yamllint for all families
 make clean       # remove built images from all families
+
+# Windows Server Core (manual/on-demand targets)
+make windows-build                      # build ltsc2022 + ltsc2025
+make windows-test WINDOWS_VERSION=ltsc2022
+make windows-lint
+make windows-scan WINDOWS_VERSION=ltsc2025
 ```
 
 For Windows, see [Windows build and test instructions](windows-golden-images/README.md). Use `make test-windows WINDOWS_VERSION=ltsc2022` (or `ltsc2025`) only on a matching Windows container host; this is never part of the default `make` targets.

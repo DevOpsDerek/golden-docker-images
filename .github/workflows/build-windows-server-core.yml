@@ -1,0 +1,89 @@
+# Build and validate one Windows Server Core LTSC golden image on demand.
+# Cost-conscious design: manual trigger only, no recurring push/PR/scheduled Windows runner usage.
+
+name: Build Windows Server Core Golden Images
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Windows Server Core LTSC version to build and validate"
+        required: true
+        default: ltsc2025
+        type: choice
+        options:
+          - ltsc2022
+          - ltsc2025
+      publish:
+        description: "Publish to GHCR after validation (disabled by default)"
+        required: true
+        default: false
+        type: boolean
+
+env:
+  IMAGE_NAME: windows-server-core-golden
+
+jobs:
+  build-test-scan:
+    runs-on: ${{ inputs.version == 'ltsc2022' && 'windows-2022' || 'windows-2025' }}
+    defaults:
+      run:
+        working-directory: windows-server-core-golden-images
+        shell: pwsh
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Trivy
+        uses: aquasecurity/setup-trivy@v0.35.0
+        with:
+          trivy-version: v0.71.1
+
+      - name: Build selected LTSC image
+        env:
+          VERSION: ${{ inputs.version }}
+        run: docker build -t "$env:IMAGE_NAME:$env:VERSION" "./$env:VERSION"
+
+      - name: Focused tests for selected LTSC image
+        env:
+          VERSION: ${{ inputs.version }}
+        run: ./tests/test.ps1 -ImageBase "$env:IMAGE_NAME" -TargetVersion "$env:VERSION"
+
+      - name: Run Trivy vulnerability scanner
+        env:
+          VERSION: ${{ inputs.version }}
+        run: trivy image --exit-code 1 --severity CRITICAL,HIGH --ignore-unfixed "$env:IMAGE_NAME:$env:VERSION"
+
+  publish:
+    if: inputs.publish == true
+    needs: build-test-scan
+    runs-on: ${{ inputs.version == 'ltsc2022' && 'windows-2022' || 'windows-2025' }}
+    defaults:
+      run:
+        working-directory: windows-server-core-golden-images
+        shell: pwsh
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Rebuild selected LTSC image for publish
+        env:
+          VERSION: ${{ inputs.version }}
+        run: docker build -t "$env:IMAGE_NAME:$env:VERSION" "./$env:VERSION"
+
+      - name: Publish selected image to GHCR (opt-in)
+        env:
+          VERSION: ${{ inputs.version }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPO_OWNER: ${{ github.repository_owner }}
+        run: |
+          $repoOwnerLower = "$env:GITHUB_REPO_OWNER".ToLowerInvariant()
+          $ghcrImage = "ghcr.io/$repoOwnerLower/$env:IMAGE_NAME"
+          $env:GITHUB_TOKEN | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+          docker tag "$env:IMAGE_NAME:$env:VERSION" "$ghcrImage:$env:VERSION"
+          docker push "$ghcrImage:$env:VERSION"
