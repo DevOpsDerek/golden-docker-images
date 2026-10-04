@@ -1,0 +1,2 @@
+# Mark all cached import files as generated
+* linguist-generated=true
