@@ -2,6 +2,8 @@
 on:
   issues:
     types: [opened, reopened]
+  permissions:
+    contents: read
 permissions:
   contents: read
   issues: read
@@ -13,6 +15,8 @@ tools:
     toolsets: [issues, labels]
 safe-outputs:
   add-comment:
+    max: 1
+    target: triggering
     pull-requests: false
 ---
 
