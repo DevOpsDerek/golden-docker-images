@@ -21,7 +21,7 @@ jobs:
 
   powershell:
     name: Analyze PowerShell
-    uses: DevOpsDerek/workflows/.github/workflows/lint-powershell.yml@35ec3f531b5eb0f0f42f232f23e1dc5735e36c35
+    uses: DevOpsDerek/workflows/.github/workflows/lint-powershell.yml@5ecebff22598835cbf5ccd7bfa07c036cce22ee9
     with:
       psscriptanalyzer-version: 1.24.0
       working-directory: windows-golden-images
