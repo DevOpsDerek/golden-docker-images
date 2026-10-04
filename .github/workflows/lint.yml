@@ -19,6 +19,14 @@ jobs:
       gh-aw-version: v0.89.21
       workflows-directory: .github/workflows
 
+  powershell:
+    name: Analyze PowerShell
+    uses: DevOpsDerek/workflows/.github/workflows/lint-powershell.yml@30f86d7d8536364b0a31de4bc66214b39e8785bb
+    with:
+      psscriptanalyzer-version: 1.24.0
+      working-directory: windows-golden-images
+      settings-path: .github/workflows/lint/powershell-settings.psd1
+
   pre-commit:
     runs-on: ubuntu-24.04
     steps:
