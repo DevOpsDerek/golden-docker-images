@@ -8,7 +8,17 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+
 jobs:
+  validate-agentic-workflows:
+    name: Validate GitHub automation
+    uses: DevOpsDerek/workflows/.github/workflows/validate-agentic-workflows.yml@57da3f99768c3403cb688b1729d3dfc146c7cd4b
+    with:
+      gh-aw-version: v0.89.21
+      workflows-directory: .github/workflows
+
   pre-commit:
     runs-on: ubuntu-24.04
     steps:
