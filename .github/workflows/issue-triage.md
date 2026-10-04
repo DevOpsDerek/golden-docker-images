@@ -11,6 +11,9 @@ imports:
 tools:
   github:
     toolsets: [issues, labels]
+safe-outputs:
+  add-comment:
+    pull-requests: false
 ---
 
 Follow the imported issue-triage instructions for the triggering issue. Base
